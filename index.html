@@ -1395,12 +1395,12 @@ function arrive(p){p.state='home';p.vx=p.vy=0;jiggle(p,1.3);neighborsJiggle(p,0.
   updUI();checkDone();}
 function checkStage(){if(stage==='whole'&&pieces.every(p=>p.torn)){stage='play';updUI()}}
 function checkDone(){if(stage==='play'&&pieces.every(p=>p.state==='home')){finish()}}
-let panelTimer=null;
-function finish(){stage='done';live=true;liveAt=time+0.9;SC.start();
+let panelTimer=null,doneShown=false;
+function finish(){stage='done';doneShown=false;live=true;liveAt=time+0.9;SC.start();
   if(picKey in PLANETS){PL.done[curReg]=1;PL.save();frozenReg=-1}
   jiggle(board,2.6);kick(board,-Math.PI/2,-2.5);sDone();
   doneCount++;try{localStorage.setItem('mizutama-jigsaw-done',doneCount)}catch(e){}
-  updUI();clearTimeout(panelTimer);panelTimer=setTimeout(()=>{if(stage==='done')document.getElementById('panel').classList.remove('off')},1600);}
+  updUI();clearTimeout(panelTimer);panelTimer=setTimeout(()=>{if(stage==='done'){doneShown=true;document.getElementById('panel').classList.remove('off')}},1600);}
 
 function targets(list){const out=[],pr=list.length?prOf(list[0])*0.66:30;
   for(const p of list){let best=null,bd=-1;
@@ -1676,7 +1676,7 @@ panel.classList.remove('off')}
   else if(stage==='play'){sub.innerHTML=`もどった水玉 <b>${homeCount()}</b> / ${pieces.length}`;panel.classList.add('off')}
   else{sub.innerHTML=`できた絵 <b>${doneCount}</b> まい`;
     document.getElementById('msg').textContent=SC.done[0];
-    document.getElementById('msg2').textContent=SC.done[1];panel.classList.add('off')}
+    document.getElementById('msg2').textContent=SC.done[1];panel.classList.toggle('off',!doneShown)}
   document.querySelectorAll('.sz').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.n===nPieces));
   document.querySelectorAll('.pk').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===picKey));
 }
@@ -2203,7 +2203,7 @@ if(picKey in PLANETS)view='map';
 if(picKey==='window')view='window';
 newScene();layout();build(nPieces,false);if(view==='map'){updUI();mapFit(true);panHint=true;setTimeout(()=>toast(GL()?'指で回すと、ぐるりと一周見わたせます':'横にすべらせると、ほかの区画も見わたせます'),600)}
 if(view==='window')WIN.enter();
-if(view==='puzzle'&&(location.hash==='#kansei'||HK)){for(const p of pieces)p.torn=true;stage='play';finish();panel.classList.remove('off')}
+if(view==='puzzle'&&(location.hash==='#kansei'||HK)){for(const p of pieces)p.torn=true;stage='play';finish();doneShown=true;panel.classList.remove('off')}
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>layout());
 requestAnimationFrame(frame);
 })();
