@@ -158,6 +158,13 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
     <button class="vw" type="button" data-n="3">たくさん</button>
     </div></div>
   </div>
+  <div class="sizes" id="winDRow" role="group" aria-label="水滴" hidden>
+    <span class="lab">水滴</span>
+    <div class="opts"><div class="seg">
+    <button class="vw" type="button" data-d="1">こまかい</button>
+    <button class="vw" type="button" data-d="1.4">大つぶ（軽い）</button>
+    </div></div>
+  </div>
   <div class="sizes" id="sizeRow" role="group" aria-label="ピースの数">
     <span class="lab" id="lab">ピース</span>
     <div class="opts"><div class="seg">
@@ -1662,7 +1669,7 @@ cv.addEventListener('pointerup',release);cv.addEventListener('pointercancel',rel
 // ---------- UI ----------
 const sub=document.getElementById('sub'),panel=document.getElementById('panel');
 function updUI(){
-  {const isW=view==='window';document.getElementById('viewRow').hidden=!isW;document.getElementById('sizeRow').hidden=isW;document.getElementById('winNRow').hidden=!isW;document.getElementById('winMRow').hidden=!isW;
+  {const isW=view==='window';document.getElementById('viewRow').hidden=!isW;document.getElementById('sizeRow').hidden=isW;document.getElementById('winNRow').hidden=!isW;document.getElementById('winDRow').hidden=!isW;document.getElementById('winMRow').hidden=!isW;
    if(!isW){document.getElementById('pick').hidden=true;document.getElementById('refog').hidden=true}else{WIN.ui();return}}
   const bk=document.getElementById('back'),pr=document.getElementById('pondReset');
   {const mar=picKey==='marble';skinRow.hidden=!mar;skinOpts.querySelectorAll('.sk').forEach((b,i)=>b.setAttribute('aria-pressed',i===skinI));
@@ -1909,7 +1916,7 @@ const NIGHTV={
     if(Wn.stage==='done'){this.bolt(S,true);return true}return false}
 };
 
-const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.createElement('canvas'),pgc:null,jM:40,jp:[],jGrab:new Map(),jStage:'whole',comp:document.createElement('canvas'),cg:null,jc:3,jr:4,jE:null,panelOpen:true,G:{x:0,y:0,w:0,h:0,ft:12,sh:34},sd:1,dd:1,
+const WIN={kind:'park',ds:1,stage:'start',jn:2,jMode:'drop',qE:null,pad:document.createElement('canvas'),pgc:null,jM:40,jp:[],jGrab:new Map(),jStage:'whole',comp:document.createElement('canvas'),cg:null,jc:3,jr:4,jE:null,panelOpen:true,G:{x:0,y:0,w:0,h:0,ft:12,sh:34},sd:1,dd:1,
   scn:document.createElement('canvas'),dl:document.createElement('canvas'),sg:null,dg:null,fog:null,fg:null,
   drops:[],sl:[],hand:null,ptr:new Map(),clear:0,ck:0,water:0,water0:1,t:0,dlT:0,dlDirty:true,fogFade:0,sun:0,rain:1,
   splash:[],look:{x:0,y:0},lookT:0,lastAbs:0,lastLand:0,lastShake:0,ps:null,ns:null,rn:null,rnT:0,
@@ -2062,11 +2069,12 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
       gr.addColorStop(0,`rgba(${c},.12)`);gr.addColorStop(1,`rgba(${c},0)`);g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2)}
     g.fillStyle=night?'rgba(150,160,170,.12)':'rgba(255,255,255,.2)';for(let i=0;i<fw*fh/14;i++)g.fillRect(rnd(0,fw)|0,rnd(0,fh)|0,1,1);
     this.fog=f;this.fg=g;
-    const N=Math.round(G.w*G.h/520),D=[];let W0=0;
-    for(let i=0;i<N;i++){const u=Math.random(),r=u<.62?rnd(.8,2.1):u<.92?rnd(2.1,4.2):rnd(4.2,6.4);let x=0,y=0,ok=false;
-      for(let k=0;k<8&&!ok;k++){x=rnd(r,G.w-r);y=rnd(r,G.h-r);ok=!D.some(d=>Math.hypot(d.x-x,d.y-y)<d.r+r+1)}D.push({x,y,r});W0+=r*r}
-    this.drops=D;this.water0=W0;this.water=0;this.sl=[];this.hand=null;this.ptr.clear();this.splash=[];this.clear=0;this.ck=0;this.fogFade=0;this.sun=0;this.rain=1;this.stage='jig';this.dlDirty=true;this.dlT=0;
+    this.makeDrops();this.water=0;this.sl=[];this.hand=null;this.ptr.clear();this.splash=[];this.clear=0;this.ck=0;this.fogFade=0;this.sun=0;this.rain=1;this.stage='jig';this.dlDirty=true;this.dlT=0;
     this.ps=PARKV.make();this.ns=NIGHTV.make();this.jigBuild()},
+  makeDrops(){const G=this.G,k=this.ds,N=Math.round(G.w*G.h/520/(k*k)),D=[];let W0=0;
+    for(let i=0;i<N;i++){const u=Math.random(),r=k*(u<.62?rnd(.8,2.1):u<.92?rnd(2.1,4.2):rnd(4.2,6.4));let x=0,y=0,ok=false;
+      for(let j=0;j<8&&!ok;j++){x=rnd(r,G.w-r);y=rnd(r,G.h-r);ok=!D.some(d=>Math.hypot(d.x-x,d.y-y)<d.r+r+1)}D.push({x,y,r});W0+=r*r}
+    this.drops=D;this.water0=W0;this.dlDirty=true},
   enter(){this.layout();this.reset();this.panelOpen=true;updUI()},
   leave(){this.rainSound(false);this.ptr.clear();this.hand=null},
   wipeLine(x0,y0,x1,y1,r,a){if(!this.fg)return;const g=this.fg,k=this.fog.width/this.G.w,d=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(d/(r*.35)));
@@ -2076,7 +2084,7 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
     g.restore()},
   handPrint(x,y,s,a){if(!this.fg)return;const k=this.fog.width/this.G.w;this.fg.save();this.fg.globalCompositeOperation='destination-out';this.fg.fillStyle='rgba(0,0,0,.92)';
     this.fg.scale(k,k);handPath(this.fg,x,y,s,a);this.fg.fill();this.fg.restore();
-    for(const d of this.drops)if(d.r>2&&Math.hypot(d.x-x,d.y-y)<s*1.4&&Math.random()<.6)d.go=1},
+    for(const d of this.drops)if(d.r>2*this.ds&&Math.hypot(d.x-x,d.y-y)<s*1.4&&Math.random()<.6)d.go=1},
   toSlider(x,y,r){this.sl.push({x,y,r,vy:0,ph:rnd(0,6),sd:rnd(0,6),pause:0})},
   stroke(id,x0,y0,x1,y1){const G=this.G;x1=Math.max(0,Math.min(G.w,x1));y1=Math.max(0,Math.min(G.h,y1));
     this.wipeLine(x0,y0,x1,y1,22,.15);
@@ -2101,12 +2109,12 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
     const p=this.ptr.get(e.pointerId);if(!p)return;this.ptr.delete(e.pointerId);
     if(e.type==='pointerup'&&!p.moved&&performance.now()-p.t0<400)this.V.tap(p.lx,p.ly,this.S,this);
     const h=this.hand;if(h&&h.id===e.pointerId){const r=Math.sqrt(h.m);if(r>=3.6)this.toSlider(h.x,h.y,r);else if(r>0){this.drops.push({x:h.x,y:h.y,r});this.dlDirty=true}this.hand=null}},
-  shake(ax,ay,m){if(!this.fg||this.stage==='jig')return;let n=0;for(const d of this.drops)if(d.r>2.6&&Math.random()<Math.min(.8,m/700)){d.go=1;n++}
+  shake(ax,ay,m){if(!this.fg||this.stage==='jig')return;let n=0;for(const d of this.drops)if(d.r>2.6*this.ds&&Math.random()<Math.min(.8,m/700)){d.go=1;n++}
     for(const s of this.sl)s.vy+=m*.05;if(n&&this.t-this.lastShake>.25){this.lastShake=this.t;bloop(300,700,.2,.07)}},
   measure(){const f=this.fog,w=f.width,h=f.height,d=this.fg.getImageData(0,0,w,h).data,m0=Math.floor(w/2-9*w/this.G.w),m1=Math.ceil(w/2+9*w/this.G.w);let c=0,n=0;
     for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2){if(x>=m0&&x<=m1)continue;n++;if(d[(y*w+x)*4+3]<80)c++}
     this.clear=n?c/n:0;if(this.stage==='play')sub.innerHTML=`くもりがとれた <b>${Math.min(99,Math.round(this.clear/.8*100))}</b>%`},
-  finish(){this.stage='done';sDone();for(const d of this.drops)if(d.r>3.2&&Math.random()<.7)d.go=1;
+  finish(){this.stage='done';sDone();for(const d of this.drops)if(d.r>3.2*this.ds&&Math.random()<.7)d.go=1;
     const night=this.kind==='night';
     if(night){const F=this.ns.F;F.mode='here';F.sink=0;NIGHTV.bolt(this.ns,true);setTimeout(()=>{bloop(220,208,1.8,.05);bloop(233,220,1.8,.04,.2);bloop(110,104,2.2,.06,.1,'triangle')},700)}
     else setTimeout(()=>sPeep(),1800);
@@ -2120,21 +2128,21 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
     for(let i=screenRip.length-1;i>=0;i--){screenRip[i].t+=dt;if(screenRip[i].t>1.4)screenRip.splice(i,1)}
     if(!this.fg)return;const G=this.G,D=this.drops,night=this.kind==='night';
     if(this.stage==='jig')this.jUpdate(dt);
-    for(let i=D.length-1;i>=0;i--){const d=D[i];if(d.r>7.2||d.go){D.splice(i,1);this.toSlider(d.x,d.y,d.r);this.dlDirty=true}}
+    for(let i=D.length-1;i>=0;i--){const d=D[i];if(d.r>7.2*this.ds||d.go){D.splice(i,1);this.toSlider(d.x,d.y,d.r);this.dlDirty=true}}
     for(let i=this.sl.length-1;i>=0;i--){const s=this.sl[i];
       if(s.pause>0){s.pause-=dt;continue}
       const vt=28+s.r*13;s.vy+=(vt-s.vy)*Math.min(1,dt*2.5);s.ph+=dt;
       const nx=Math.max(1,Math.min(G.w-1,s.x+Math.sin(s.ph*2.1+s.sd)*dt*9)),ny=s.y+s.vy*dt;
       this.wipeLine(s.x,s.y,nx,ny,s.r*1.25,.8);
       for(let j=D.length-1;j>=0;j--){const d=D[j];if(Math.abs(d.y-ny)<s.r+d.r+2&&Math.hypot(d.x-nx,d.y-ny)<s.r*.95+d.r){s.r=Math.sqrt(s.r*s.r+d.r*d.r);D.splice(j,1);this.dlDirty=true}}
-      if(s.r>3.4&&Math.random()<dt*1.6){const rr=rnd(.8,1.6);D.push({x:s.x+rnd(-1,1),y:s.y-s.r*.6,r:rr});s.r=Math.sqrt(Math.max(1,s.r*s.r-rr*rr));this.dlDirty=true}
+      if(s.r>3.4*this.ds&&Math.random()<dt*1.6/this.ds){const rr=rnd(.8,1.6)*this.ds;D.push({x:s.x+rnd(-1,1),y:s.y-s.r*.6,r:rr});s.r=Math.sqrt(Math.max(1,s.r*s.r-rr*rr));this.dlDirty=true}
       if(s.r<4.2&&Math.random()<dt*.5){s.pause=rnd(.3,1.2);s.vy=0}
       s.x=nx;s.y=ny;
       if(s.y>G.h+s.r*.3){this.water+=s.r*s.r;this.splash.push({x:s.x,t:0,a:Math.min(1,s.r/8)});this.sl.splice(i,1);
         if(this.t-this.lastLand>.05){this.lastLand=this.t;bloop(760,300,.12,.08);bloop(1500,2300,.04,.04,.03)}}}
     for(let i=0;i<this.sl.length;i++)for(let j=this.sl.length-1;j>i;j--){const a=this.sl[i],b=this.sl[j];if(Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r*.8){a.r=Math.sqrt(a.r*a.r+b.r*b.r);a.y=Math.max(a.y,b.y);this.sl.splice(j,1)}}
     const rate=night?1.4:2.2*this.rain;
-    if(D.length<1200&&Math.random()<dt*rate){const r=Math.random()<.9?rnd(.8,2.2):rnd(2.2,3.4);D.push({x:rnd(r,G.w-r),y:rnd(r,G.h-r),r});this.dlDirty=true}
+    if(D.length<1200&&Math.random()<dt*rate/(this.ds*this.ds)){const r=this.ds*(Math.random()<.9?rnd(.8,2.2):rnd(2.2,3.4));D.push({x:rnd(r,G.w-r),y:rnd(r,G.h-r),r});this.dlDirty=true}
     for(let i=this.splash.length-1;i>=0;i--){this.splash[i].t+=dt;if(this.splash[i].t>1.6)this.splash.splice(i,1)}
     if(this.stage==='done'){this.fogFade=Math.min(1,this.fogFade+dt/2.4);if(!night){this.rain=Math.max(0,this.rain-dt*.45);this.sun=Math.min(1,this.sun+dt*.28)}}
     else if(this.stage==='play'){this.ck-=dt;if(this.ck<0){this.ck=.35;this.measure();if(this.clear>=.8)this.finish()}}
@@ -2186,7 +2194,7 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
   ui(){const $=id=>document.getElementById(id),night=this.kind==='night';
     for(const id of['scatter','restart','back','shape','pondReset'])$(id).hidden=true;$('scatter').hidden=!(this.stage==='jig'&&this.jStage==='whole');
     skinRow.hidden=true;$('dock').hidden=true;
-    $('refog').hidden=this.stage==='start'||this.stage==='jig';$('winNRow').hidden=false;$('winMRow').hidden=false;document.querySelectorAll('.vw[data-m]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===this.jMode));document.querySelectorAll('.vw[data-n]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.n===this.jn));$('pick').hidden=false;$('pick').textContent=this.panelOpen?'とじる':'えらぶ';
+    $('refog').hidden=this.stage==='start'||this.stage==='jig';$('winNRow').hidden=false;$('winDRow').hidden=false;document.querySelectorAll('.vw[data-d]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.d===this.ds));$('winMRow').hidden=false;document.querySelectorAll('.vw[data-m]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===this.jMode));document.querySelectorAll('.vw[data-n]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.n===this.jn));$('pick').hidden=false;$('pick').textContent=this.panelOpen?'とじる':'えらぶ';
     document.querySelectorAll('.pk').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k==='window'));
     document.querySelectorAll('.vw[data-v]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===this.kind));
     const JL=this.jMode==='jelly'?'ゼリー':'水玉';sub.innerHTML=this.stage==='jig'?(this.jStage==='whole'?(this.jMode==='jelly'?`ゼリー <b>${this.jp.length}</b> こ`:`<b>${this.jp.length}</b> この水玉にちぎれます`):`もどった${JL} <b>${this.jp.filter(p=>p.torn&&p.state==='home').length}</b> / ${this.jp.length}`):this.stage==='done'?(night?'窓の外に <b>だれか</b> がいます':'雨が <b>やみました</b>'):`くもりがとれた <b>${Math.min(99,Math.round(this.clear/.8*100))}</b>%`;
@@ -2196,11 +2204,13 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
     panel.classList.toggle('off',!this.panelOpen)}
 };
 acReset.push(()=>{WIN.rn=null});
-try{const k=localStorage.getItem('mizutama-window-kind');if(k==='night'||k==='park')WIN.kind=k;const n=+localStorage.getItem('mizutama-window-lv');if([1,2,3].includes(n))WIN.jn=n;if(localStorage.getItem('mizutama-window-mode')==='jelly')WIN.jMode='jelly'}catch(e){}
+try{const k=localStorage.getItem('mizutama-window-kind');if(k==='night'||k==='park')WIN.kind=k;const n=+localStorage.getItem('mizutama-window-lv');if([1,2,3].includes(n))WIN.jn=n;if(localStorage.getItem('mizutama-window-mode')==='jelly')WIN.jMode='jelly';if(localStorage.getItem('mizutama-window-drop')==='1.4')WIN.ds=1.4}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)WIN.rainSound(false)});
 document.getElementById('pick').addEventListener('click',()=>{audio();WIN.panelOpen=!WIN.panelOpen;updUI();sBack()});
 document.getElementById('refog').addEventListener('click',()=>{audio();WIN.reset();WIN.panelOpen=false;updUI();bloop(400,200,.4,.06);toast('窓が、また水玉になりました')});
 document.querySelectorAll('.vw[data-n]').forEach(b=>b.addEventListener('click',()=>{audio();WIN.jn=+b.dataset.n;try{localStorage.setItem('mizutama-window-lv',WIN.jn)}catch(e){}WIN.reset();WIN.panelOpen=true;updUI();sBack()}));
+document.querySelectorAll('.vw[data-d]').forEach(b=>b.addEventListener('click',()=>{audio();WIN.ds=+b.dataset.d;try{localStorage.setItem('mizutama-window-drop',WIN.ds)}catch(e){}
+  if(WIN.fg){WIN.sl=[];WIN.hand=null;WIN.makeDrops();WIN.water=0;WIN.splash=[]}updUI();sBack();toast(WIN.ds>1?'水滴を大つぶにしました（数が半分くらいで軽くなります）':'水滴をこまかくしました')}));
 document.querySelectorAll('.vw[data-m]').forEach(b=>b.addEventListener('click',()=>{audio();WIN.jMode=b.dataset.m;try{localStorage.setItem('mizutama-window-mode',WIN.jMode)}catch(e){}WIN.reset();WIN.panelOpen=true;updUI();sBack()}));
 document.querySelectorAll('.vw[data-v]').forEach(b=>b.addEventListener('click',()=>{audio();WIN.kind=b.dataset.v;try{localStorage.setItem('mizutama-window-kind',WIN.kind)}catch(e){}
   if(view!=='window')choosePic('window');else{WIN.reset();WIN.panelOpen=true;updUI()}sBack()}));
