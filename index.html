@@ -1916,7 +1916,7 @@ const NIGHTV={
     if(Wn.stage==='done'){this.bolt(S,true);return true}return false}
 };
 
-const WIN={kind:'park',ds:1,stage:'start',jn:2,jMode:'drop',qE:null,pad:document.createElement('canvas'),pgc:null,jM:40,jp:[],jGrab:new Map(),jStage:'whole',comp:document.createElement('canvas'),cg:null,jc:3,jr:4,jE:null,panelOpen:true,G:{x:0,y:0,w:0,h:0,ft:12,sh:34},sd:1,dd:1,
+const WIN={kind:'park',ds:1.4,stage:'start',jn:2,jMode:'drop',qE:null,pad:document.createElement('canvas'),pgc:null,jM:40,jp:[],jGrab:new Map(),jStage:'whole',comp:document.createElement('canvas'),cg:null,jc:3,jr:4,jE:null,panelOpen:true,G:{x:0,y:0,w:0,h:0,ft:12,sh:34},sd:1,dd:1,
   scn:document.createElement('canvas'),dl:document.createElement('canvas'),sg:null,dg:null,fog:null,fg:null,
   drops:[],sl:[],hand:null,ptr:new Map(),clear:0,ck:0,water:0,water0:1,t:0,dlT:0,dlDirty:true,fogFade:0,sun:0,rain:1,
   splash:[],look:{x:0,y:0},lookT:0,lastAbs:0,lastLand:0,lastShake:0,ps:null,ns:null,rn:null,rnT:0,
@@ -2204,7 +2204,7 @@ const WIN={kind:'park',ds:1,stage:'start',jn:2,jMode:'drop',qE:null,pad:document
     panel.classList.toggle('off',!this.panelOpen)}
 };
 acReset.push(()=>{WIN.rn=null});
-try{const k=localStorage.getItem('mizutama-window-kind');if(k==='night'||k==='park')WIN.kind=k;const n=+localStorage.getItem('mizutama-window-lv');if([1,2,3].includes(n))WIN.jn=n;if(localStorage.getItem('mizutama-window-mode')==='jelly')WIN.jMode='jelly';if(localStorage.getItem('mizutama-window-drop')==='1.4')WIN.ds=1.4}catch(e){}
+try{const k=localStorage.getItem('mizutama-window-kind');if(k==='night'||k==='park')WIN.kind=k;const n=+localStorage.getItem('mizutama-window-lv');if([1,2,3].includes(n))WIN.jn=n;if(localStorage.getItem('mizutama-window-mode')==='jelly')WIN.jMode='jelly';if(localStorage.getItem('mizutama-window-drop')==='1')WIN.ds=1}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)WIN.rainSound(false)});
 document.getElementById('pick').addEventListener('click',()=>{audio();WIN.panelOpen=!WIN.panelOpen;updUI();sBack()});
 document.getElementById('refog').addEventListener('click',()=>{audio();WIN.reset();WIN.panelOpen=false;updUI();bloop(400,200,.4,.06);toast('窓が、また水玉になりました')});
