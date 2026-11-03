@@ -193,8 +193,16 @@ let doneCount=0;try{doneCount=+localStorage.getItem('mizutama-jigsaw-done')||0}c
 
 // ---------- audio ----------
 let ac=null,soundOn=true;
-function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
-  if(ac&&ac.state!=='running'){try{ac.resume()}catch(e){}}return ac}
+const rsm=a=>{try{const p=a.resume();p&&p.catch&&p.catch(()=>{})}catch(e){}};let acStuck=false;const acReset=[];
+function watchAC(a){a.onstatechange=()=>{if(a!==ac)return;if(a.state==='interrupted'||a.state==='suspended'){setTimeout(()=>{if(a===ac&&a.state!=='running'){rsm(a);setTimeout(()=>{if(a===ac&&a.state!=='running')acStuck=true},500)}},250)}}}
+function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)();watchAC(ac)}catch(e){}}
+  if(ac&&ac.state!=='running'){rsm(ac);}return ac}
+/* iPhone: 許可ダイアログなどで音がとまったら、次のタップで音を作りなおす */
+function remakeAudio(){const old=ac;ac=null;try{const p=old&&old.state!=='closed'&&old.close();p&&p.catch&&p.catch(()=>{})}catch(e){}acStuck=false;for(const f of acReset)f();audio()}
+function unlockAudio(){if(acStuck||(ac&&ac.state==='closed'))remakeAudio();const a=audio();if(!a)return;
+  try{const b=a.createBuffer(1,1,22050),s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0)}catch(e){}}
+for(const ev of['touchend','click','keydown'])document.addEventListener(ev,unlockAudio,{capture:true,passive:true});
+function checkAudioSoon(){setTimeout(()=>{if(ac&&ac.state!=='running'){rsm(ac);setTimeout(()=>{if(ac&&ac.state!=='running')acStuck=true},500)}},300)}
 function bloop(f0,f1,dur,vol,delay=0,type='sine'){if(!soundOn)return;const a=audio();if(!a)return;
   const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();o.type=type;
   o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur*0.7);
@@ -214,7 +222,7 @@ const sSand=()=>{for(let i=0;i<8;i++)bloop(1800+Math.random()*2600,1100+Math.ran
 const sFish=()=>{bloop(500,1500,0.08,0.1);bloop(700,1800,0.07,0.06,0.07)};
 const sndBtn=document.getElementById('snd');
 sndBtn.addEventListener('click',()=>{soundOn=!soundOn;sndBtn.textContent=soundOn?'音 オン':'音 オフ';sndBtn.setAttribute('aria-pressed',soundOn);if(soundOn)sGrab()});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ac&&ac.state!=='running'){try{ac.resume()}catch(e){}}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ac&&ac.state!=='running'){rsm(ac);checkAudioSoon()}});
 
 // ---------- wobble (modal) ----------
 const OM=[15,22,29],ZE=0.085;
@@ -1603,7 +1611,7 @@ addEventListener('devicemotion',onMotion);
 function flushMotion(){const m=Math.hypot(mAx,mAy);if(m>0){const k=m>900?900/m:1;shake(mAx*k,mAy*k);mAx=mAy=0}}
 let toastT=null;function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},5200)}
 async function enableMotion(){audio();
-  try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){const r=await DeviceMotionEvent.requestPermission();if(r!=='granted')throw 0}}
+  try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){const r=await DeviceMotionEvent.requestPermission();checkAudioSoon();if(r!=='granted')throw 0}}
   catch(e){toast('スマホの動きを使えませんでした。池を指でさっとなでても、水がゆれます');return}
   removeEventListener('devicemotion',onMotion);addEventListener('devicemotion',onMotion);
   toast('スマホをゆらしてみてください');
@@ -2187,6 +2195,7 @@ const WIN={kind:'park',stage:'start',jn:2,jMode:'drop',qE:null,pad:document.crea
     $('msg').textContent=M[0];$('msg2').textContent=M[1];
     panel.classList.toggle('off',!this.panelOpen)}
 };
+acReset.push(()=>{WIN.rn=null});
 try{const k=localStorage.getItem('mizutama-window-kind');if(k==='night'||k==='park')WIN.kind=k;const n=+localStorage.getItem('mizutama-window-lv');if([1,2,3].includes(n))WIN.jn=n;if(localStorage.getItem('mizutama-window-mode')==='jelly')WIN.jMode='jelly'}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)WIN.rainSound(false)});
 document.getElementById('pick').addEventListener('click',()=>{audio();WIN.panelOpen=!WIN.panelOpen;updUI();sBack()});
