@@ -69,6 +69,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .sk:hover,.dock button:not(.on):hover{box-shadow:none}
 .pk{flex:1 1 0}
 .tray .sizes:first-child .pk{white-space:nowrap;padding-left:4px;padding-right:4px}
+.opts.hard{gap:10px;font-size:.74rem;color:var(--ink-soft);font-weight:700;white-space:nowrap}.opts.hard input{flex:1;min-width:0;accent-color:var(--ring);height:28px;margin:0}
 @media (max-width:520px){
   .tray{gap:8px;padding:10px 12px 12px}
   .sizes{flex-direction:column;align-items:stretch;gap:4px}
@@ -176,6 +177,10 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
     <button class="vw" type="button" data-ss="hito">ひとがた</button>
     <button class="vw" type="button" data-ss="hoshi">ほし</button>
     </div></div>
+  </div>
+  <div class="sizes" id="slmHRow" role="group" aria-label="かたさ" hidden>
+    <span class="lab">かたさ</span>
+    <div class="opts hard"><span>やわらか</span><input type="range" id="slmHard" min="0" max="100" value="60" aria-label="スライムのかたさ"><span>かため</span></div>
   </div>
   <div class="sizes" id="slmNRow" role="group" aria-label="スライムの数" hidden>
     <span class="lab">ピース</span>
@@ -1699,7 +1704,7 @@ cv.addEventListener('pointerup',release);cv.addEventListener('pointercancel',rel
 // ---------- UI ----------
 const sub=document.getElementById('sub'),panel=document.getElementById('panel');
 function updUI(){
-  document.getElementById('cupNRow').hidden=view!=='cup';document.getElementById('slmNRow').hidden=view!=='slime';document.getElementById('slmSRow').hidden=view!=='slime';
+  document.getElementById('cupNRow').hidden=view!=='cup';document.getElementById('slmNRow').hidden=view!=='slime';document.getElementById('slmSRow').hidden=view!=='slime';document.getElementById('slmHRow').hidden=view!=='slime';
   if(view==='slime'){for(const id of['viewRow','sizeRow','winNRow','winDRow','winMRow'])document.getElementById(id).hidden=true;SLIME.ui();return}
   if(view==='cup'){for(const id of['viewRow','sizeRow','winNRow','winDRow','winMRow'])document.getElementById(id).hidden=true;CUP.ui();return}
   {const isW=view==='window';document.getElementById('viewRow').hidden=!isW;document.getElementById('sizeRow').hidden=isW;document.getElementById('winNRow').hidden=!isW;document.getElementById('winDRow').hidden=!isW;document.getElementById('winMRow').hidden=!isW;
@@ -2628,14 +2633,16 @@ document.querySelectorAll('.vw[data-cn]').forEach(b=>b.addEventListener('click',
 
 
 // ---------- 緑のスライム（まどに投げるとペタッ、くるくる回って下りてくる） ----------
-const SOM=[8.5,12,15.5],SZE=.3;
-function smodal(o,dt){for(let n=0;n<3;n++){const w=SOM[n];for(let j=0;j<2;j++){const i=n*2+j;
+const SOM=[8.5,12,15.5];let SZE=.3,SFQ=1;
+/* かたさ k（0：やわらかい グミ 〜 1：かたい グミ） */
+function setHard(k){SFQ=.55+.95*k;SZE=.12+.36*k}
+function smodal(o,dt){for(let n=0;n<3;n++){const w=SOM[n]*SFQ;for(let j=0;j<2;j++){const i=n*2+j;
   o.mv[i]+=(-w*w*o.m[i]-2*SZE*w*o.mv[i])*dt;o.m[i]+=o.mv[i]*dt;o.m[i]=Math.max(-.45,Math.min(.45,o.m[i]))}}}
 const angD=(a,b)=>{let d=(a-b)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d};
 const SSHAPE={
   maru:()=>1,
   hito:t=>{const L=[[-Math.PI/2,.5,1],[-.35,.33,.93],[Math.PI+.35,.33,.93],[1.15,.3,1],[Math.PI-1.15,.3,1]];let v=0;for(const [a,w,k] of L){const d=angD(t,a)/w;v=Math.max(v,k*Math.exp(-d*d))}return .5+.5*v},
-  hoshi:t=>.64+.36*Math.cos(5*(t+Math.PI/2))};
+  hoshi:t=>.7+.3*Math.pow((1+Math.cos(5*(t+Math.PI/2)))/2,.75)};
 const STAB={};for(const k in SSHAPE){const a=[];for(let i=0;i<48;i++)a.push(SSHAPE[k](i/48*TAU));STAB[k]=a}
 function slimePath(g,tab,m,r){const K=tab.length,p=[];
   for(let i=0;i<K;i++){const t=i/K*TAU,q=r*tab[i]*(1+m[0]*Math.cos(2*t)+m[1]*Math.sin(2*t)+m[2]*Math.cos(3*t)+m[3]*Math.sin(3*t)+m[4]*Math.cos(4*t)+m[5]*Math.sin(4*t));p.push([Math.cos(t)*q,Math.sin(t)*q])}
@@ -2648,7 +2655,7 @@ const sFlip=()=>bloop(480,760,.06,.025);
 const sJelly=()=>{for(let i=0;i<3;i++)bloop(210-i*30,140-i*20,.2,.09,i*.08,'triangle')};
 const sThump=()=>bloop(150,80,.14,.1,0,'triangle');
 
-const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},sd:1,ft:12,sill:18,floor:0,
+const SLIME={stage:'whole',lv:2,shape:'hito',hard:.6,panelOpen:true,G:{x:0,y:0,w:0,h:0},sd:1,ft:12,sill:18,floor:0,
   pic:document.createElement('canvas'),bg:document.createElement('canvas'),B:null,jp:[],grab:new Map(),strands:[],t:0,
   meld:1,meldT:1,wob:mk(),blink:0,nb:2,lastSnd:0,
   /* --- 大きさと位置 --- */
@@ -2741,8 +2748,8 @@ const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},
       const zt=p.state==='free'||p.state==='pop'||(p.state==='held'&&!this.inGlass(p.x,p.y))?.74:1;p.z+=(zt-p.z)*Math.min(1,dt*7);const r=p.r*p.z;
       switch(p.state){
       case 'peel':{const vx=p.fx-p.ax,vy=p.fy-p.ay,len=Math.hypot(vx,vy)||1e-6,k=Math.min(len*.38,r*.65);p.x=p.ax+vx/len*k;p.y=p.ay+vy/len*k;
-        const e=Math.min(.38,len/r*.3),a=Math.atan2(vy,vx)-p.ang;p.m.fill(0);p.mv.fill(0);p.m[0]=e*Math.cos(2*a);p.m[1]=e*Math.sin(2*a);
-        if(len>r*1.25){p.state='held';p.ox=p.x-p.fx;p.oy=p.y-p.fy;p.vx=p.vy=0;this.strand(p.ax,p.ay,p);sGoo();jiggle(p,1);this.tear(p);if(p.wasHome)this.near(p,.8)}break}
+        const sf=1-this.hard,e=Math.min(.3+.15*sf,len/r*(.22+.18*sf)),a=Math.atan2(vy,vx)-p.ang;p.m.fill(0);p.mv.fill(0);p.m[0]=e*Math.cos(2*a);p.m[1]=e*Math.sin(2*a);
+        if(len>r*(1+.6*(1-this.hard))){p.state='held';p.ox=p.x-p.fx;p.oy=p.y-p.fy;p.vx=p.vy=0;this.strand(p.ax,p.ay,p);sGoo();jiggle(p,1);this.tear(p);if(p.wasHome)this.near(p,.8)}break}
       case 'held':{const d=Math.exp(-dt*6);p.ox*=d;p.oy*=d;const gx=p.fx+p.ox,gy=p.fy+p.oy,kk=Math.min(1,dt*14),nx=p.x+(gx-p.x)*kk,ny=p.y+(gy-p.y)*kk,vx=(nx-p.x)/dt,vy=(ny-p.y)/dt;
         const ax=(vx-p.vx)/dt,ay=(vy-p.vy)/dt;p.vx+=(vx-p.vx)*.5;p.vy+=(vy-p.vy)*.5;p.x=nx;p.y=ny;p.lift+=(1-p.lift)*Math.min(1,dt*8);const am=Math.hypot(ax,ay);if(am>700)kick(p,Math.atan2(ay,ax)-p.ang,Math.min(am,30000)*.00028*dt);break}
       case 'throw':{p.tt+=dt;const k=Math.min(1,p.tt/p.td),e=1-(1-k)*(1-k);p.x=p.sx+(p.ex-p.sx)*e;p.y=p.sy+(p.ey-p.sy)*e;p.ang+=p.spin*dt;p.lift=1-e;if(k>=1)this.splat(p);break}
@@ -2756,7 +2763,7 @@ const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},
         if(p.y>G.y+G.h-r*.3){p.state='free';p.cr=null;p.vx=rnd(-30,30);p.vy=30;this.strand(p.x,p.y-r*.3,p);sGoo()}break}
       case 'settle':{const ax=(tx-p.x)*120-p.vx*14,ay=(ty-p.y)*120-p.vy*14;p.vx+=ax*dt;p.vy+=ay*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.ang*=Math.exp(-dt*9);p.lift*=.9;
         if(Math.hypot(tx-p.x,ty-p.y)<1.5&&Math.hypot(p.vx,p.vy)<30&&Math.abs(p.ang)<.03)this.arrive(p);break}
-      case 'free':{p.vy+=g*dt;const d=Math.exp(-dt*.8);p.vx*=d;p.x+=p.vx*dt;p.y+=p.vy*dt;p.lift*=.9;const fl=this.floor-r*1.0;
+      case 'free':{p.vy+=g*dt;const d=Math.exp(-dt*.8);p.vx*=d;p.x+=p.vx*dt;p.y+=p.vy*dt;p.lift*=.9;const fl=this.floor-r*1.15;
         if(p.y>fl){p.y=fl;if(p.vy>260){jiggle(p,Math.min(1.2,p.vy/700));kick(p,Math.PI/2-p.ang,-Math.min(2.5,p.vy/400));if(this.t-this.lastSnd>.06){this.lastSnd=this.t;sThump()}}p.vy=-p.vy*.12;p.vx*=Math.exp(-dt*6)}
         if(p.x<r*.6){p.x=r*.6;p.vx=Math.abs(p.vx)*.3}if(p.x>W-r*.6){p.x=W-r*.6;p.vx=-Math.abs(p.vx)*.3}if(p.y<HB){p.y=HB;p.vy=Math.abs(p.vy)*.3}
         if(p.y>=fl-1)p.ang+=p.vx*dt/r*.6;break}
@@ -2766,7 +2773,7 @@ const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},
     for(let it=0;it<2;it++)for(let i=0;i<fr.length;i++)for(let j=i+1;j<fr.length;j++){const a=fr[i],b=fr[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-3,min=(a.r*a.z+b.r*b.z)*.78;
       if(d<min){const push=(min-d)*.5,nx=dx/d,ny=dy/d;a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push;
         const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(rv<0){a.vx+=nx*rv*.5;a.vy+=ny*rv*.5;b.vx-=nx*rv*.5;b.vy-=ny*rv*.5}}}
-    for(const p of fr){const fl=this.floor-p.r*p.z*1.0;if(p.y>fl)p.y=fl}},
+    for(const p of fr){const fl=this.floor-p.r*p.z*1.15;if(p.y>fl)p.y=fl}},
 
   /* --- さわる --- */
   down(e){const x=e.clientX,y=e.clientY,st=this.stage;if(this.panelOpen){this.panelOpen=false;updUI()}
@@ -2831,7 +2838,7 @@ const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},
     for(const id of['scatter','restart','back','shape','pondReset','refog'])$(id).hidden=true;$('scatter').hidden=st!=='whole';$('restart').hidden=st==='whole';
     skinRow.hidden=true;$('dock').hidden=true;$('slmNRow').hidden=false;$('slmSRow').hidden=false;
     document.querySelectorAll('.vw[data-sn]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.sn===this.lv));
-    document.querySelectorAll('.vw[data-ss]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ss===this.shape));
+    document.querySelectorAll('.vw[data-ss]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ss===this.shape));$('slmHRow').hidden=false;$('slmHard').value=Math.round(this.hard*100);
     $('pick').hidden=false;$('pick').textContent=this.panelOpen?'とじる':'えらぶ';
     document.querySelectorAll('.pk').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k==='slime'));
     const n=this.jp.length,k=this.jp.filter(p=>p.torn&&p.state==='home').length;
@@ -2840,7 +2847,10 @@ const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},
       :['みどりのスライム','まどにはりついたスライムです。つまんで引っぱると、ぬちゃっとはがれます（「ちらす」で一度に）。まどに投げるとペタッとはりつき、くるくる回りながら下りてきます。正しい場所でピタッとくっつけて完成させましょう'];
     $('msg').textContent=M[0];$('msg2').textContent=M[1];panel.classList.toggle('off',!this.panelOpen)}
 };
-try{const n=+localStorage.getItem('mizutama-slime-lv');if([1,2,3].includes(n))SLIME.lv=n;const s=localStorage.getItem('mizutama-slime-shape');if(s in SSHAPE)SLIME.shape=s}catch(e){}
+try{const n=+localStorage.getItem('mizutama-slime-lv');if([1,2,3].includes(n))SLIME.lv=n;const s=localStorage.getItem('mizutama-slime-shape');if(s in SSHAPE)SLIME.shape=s;const hv=localStorage.getItem('mizutama-slime-hard');if(hv!==null&&isFinite(+hv))SLIME.hard=Math.max(0,Math.min(1,+hv))}catch(e){}
+setHard(SLIME.hard);
+{const hs=document.getElementById('slmHard');let lastJ=0;hs.addEventListener('input',()=>{audio();SLIME.hard=hs.value/100;setHard(SLIME.hard);try{localStorage.setItem('mizutama-slime-hard',SLIME.hard)}catch(e){}
+  const now=performance.now();if(now-lastJ>120){lastJ=now;for(const p of SLIME.jp)jiggle(p,.8);jiggle(SLIME.wob,.8);bloop(160+SLIME.hard*260,120+SLIME.hard*200,.12,.06,0,'triangle')}})}
 document.querySelectorAll('.vw[data-sn]').forEach(b=>b.addEventListener('click',()=>{audio();SLIME.lv=+b.dataset.sn;try{localStorage.setItem('mizutama-slime-lv',SLIME.lv)}catch(e){}SLIME.reset();sBack()}));
 document.querySelectorAll('.vw[data-ss]').forEach(b=>b.addEventListener('click',()=>{audio();SLIME.shape=b.dataset.ss;try{localStorage.setItem('mizutama-slime-shape',SLIME.shape)}catch(e){}
   for(const p of SLIME.jp)jiggle(p,1);updUI();sJelly()}));
