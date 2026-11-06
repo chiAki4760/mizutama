@@ -133,6 +133,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
     <button class="pk" type="button" id="pk-marble" data-k="marble"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 12c2-3 6-2 6 1M12 12c-3 1-3 5 0 6M12 12c1-3-2-6-5-4"/><circle cx="8.5" cy="8" r="1.2" fill="currentColor" stroke="none"/></svg>ビー玉</button>
     <button class="pk" type="button" id="pk-window" data-k="window"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="15" rx="1.5"/><path d="M12 3.5v15M2.5 20.5h19"/><path d="M7 7v1.8M8.5 11.5v1.4M16 7.5v1.8M15 12.5v1.2" stroke-width="2.2"/></svg>雨の窓</button>
     <button class="pk" type="button" id="pk-cup" data-k="cup"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9l-1.4 12H6.4z"/><path d="M6 9h7.4"/><path d="M14 19c2 0 3-.8 5-.8M16.5 21.5h3"/><circle cx="20" cy="15" r=".9" fill="currentColor" stroke="none"/></svg>コップの水</button>
+    <button class="pk" type="button" id="pk-slime" data-k="slime"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c-1-6 2-12 8-12s9 6 8 12z"/><path d="M7 19v2M17 19v1.5"/><circle cx="9.5" cy="12.5" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="12.5" r="1" fill="currentColor" stroke="none"/><path d="M8 9.5c1-1.2 2-1.6 3-1.6"/></svg>スライム</button>
     </div>
   </div>
   <div class="sizes" id="skinRow" role="group" aria-label="きせかえ" hidden>
@@ -166,6 +167,22 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
     <div class="opts"><div class="seg">
     <button class="vw" type="button" data-d="1">こまかい</button>
     <button class="vw" type="button" data-d="1.4">大つぶ（軽い）</button>
+    </div></div>
+  </div>
+  <div class="sizes" id="slmSRow" role="group" aria-label="かたち" hidden>
+    <span class="lab">かたち</span>
+    <div class="opts"><div class="seg">
+    <button class="vw" type="button" data-ss="maru">まる</button>
+    <button class="vw" type="button" data-ss="hito">ひとがた</button>
+    <button class="vw" type="button" data-ss="hoshi">ほし</button>
+    </div></div>
+  </div>
+  <div class="sizes" id="slmNRow" role="group" aria-label="スライムの数" hidden>
+    <span class="lab">ピース</span>
+    <div class="opts"><div class="seg">
+    <button class="vw" type="button" data-sn="1">すこし</button>
+    <button class="vw" type="button" data-sn="2">ふつう</button>
+    <button class="vw" type="button" data-sn="3">たくさん</button>
     </div></div>
   </div>
   <div class="sizes" id="cupNRow" role="group" aria-label="水玉の数" hidden>
@@ -1376,7 +1393,7 @@ const MARBLE={label:'ビー玉',marble:true,
     S.rips.push({x:px,y:py,t:0,r:4});bloop(1600,2000,0.05,0.04,0,'triangle')}
 };
 
-const SCENES={pond:null,globe:null,magnet:null,marble:MARBLE,window:null,cup:null};
+const SCENES={pond:null,globe:null,magnet:null,marble:MARBLE,window:null,cup:null,slime:null};
 let picKey='pond';try{const k=localStorage.getItem('mizutama-jigsaw-pic');if(k in SCENES)picKey=k;localStorage.removeItem('mizutama-jigsaw-photo')}catch(e){}
 let SC=null;
 function newScene(){if(picKey in PLANETS){PL=PLANETS[picKey];if(!PL.world.s)PL.world.make();SC=PL.scenes[curReg]}else{SC=SCENES[picKey]||MARBLE;SC.make()}}
@@ -1451,7 +1468,7 @@ function layout(){
   renderPic(time);
   for(const p of pieces)if(p.state==='home'){const q=slotPos(p);p.x=q.x;p.y=q.y}
   if(view==='map')mapFit(false);
-  WIN.layout();CUP.layout();
+  WIN.layout();CUP.layout();SLIME.layout();
 }
 addEventListener('resize',()=>{layout()});
 
@@ -1609,11 +1626,11 @@ function draw(){
   drawHint();
 }
 let last=performance.now();
-function frame(now){const dt=Math.min(0.033,Math.max(0.001,(now-last)/1000));last=now;if(view==='cup'){CUP.update(dt);CUP.draw()}else if(view==='window'){WIN.update(dt);WIN.draw()}else{update(dt);draw()}requestAnimationFrame(frame)}
+function frame(now){const dt=Math.min(0.033,Math.max(0.001,(now-last)/1000));last=now;if(view==='slime'){SLIME.update(dt);SLIME.draw()}else if(view==='cup'){CUP.update(dt);CUP.draw()}else if(view==='window'){WIN.update(dt);WIN.draw()}else{update(dt);draw()}requestAnimationFrame(frame)}
 
 // ---------- shaking ----------
 let lastShakeSnd=0,mAx=0,mAy=0,gotMotion=false,lgv=null;
-function shake(ax,ay){const m=Math.hypot(ax,ay);if(m<60)return;if(view==='cup'){CUP.shake(ax,ay,m);return}if(view==='window'){WIN.shake(ax,ay,m);return}const a=Math.atan2(ay,ax);
+function shake(ax,ay){const m=Math.hypot(ax,ay);if(m<60)return;if(view==='slime'){SLIME.shake(ax,ay,m);return}if(view==='cup'){CUP.shake(ax,ay,m);return}if(view==='window'){WIN.shake(ax,ay,m);return}const a=Math.atan2(ay,ax);
   if(view==='map'){{const c=GL()?(pickW(glb.cx,glb.cy)||{x:0,y:WH/2}):{x:(W/2-cam.ox)/cam.s,y:(H/2-cam.oy)/cam.s};PL.world.slosh(ax*0.35,ay*0.35,c.x,c.y)}if(time-lastShakeSnd>0.2&&m>200){lastShakeSnd=time;bloop(260+Math.random()*160,620+Math.random()*200,0.22,0.08)}return}
   kick(board,a,-Math.min(3,m/260));jiggle(board,Math.min(0.8,m/900));
   for(const p of pieces){if(p.state==='free'){p.vx+=ax*0.6;p.vy+=ay*0.6;jiggle(p,Math.min(1.4,m/450))}else if(p.state==='home')jiggle(p,Math.min(0.7,m/700))}
@@ -1644,6 +1661,7 @@ const grabs=new Map();
 function pointAt(e){return{x:e.clientX,y:e.clientY}}
 cv.addEventListener('pointerdown',e=>{
   audio();const {x,y}=pointAt(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}
+  if(view==='slime'){SLIME.down(e);return}
   if(view==='cup'){CUP.down(e);return}
   if(view==='window'){WIN.down(e);return}
   if(view==='map'){mapPtr.set(e.pointerId,{sx:x,sy:y,lx:x,ly:y,lt:performance.now(),moved:false,ox0:cam.ox});cam.vx=0;glb.vlon=glb.vlat=0;glb.idle=0;return}
@@ -1658,7 +1676,7 @@ cv.addEventListener('pointerdown',e=>{
     if(best&&bd<prOf(best)){best.state='pull';best.fx=x;best.fy=y;front(best);sGrab();grabs.set(e.pointerId,best);return}}
   screenRip.push({x,y,t:0});sWater();
 });
-cv.addEventListener('pointermove',e=>{if(view==='cup'){CUP.move(e);return}if(view==='window'){WIN.move(e);return}const mp=mapPtr.get(e.pointerId);
+cv.addEventListener('pointermove',e=>{if(view==='slime'){SLIME.move(e);return}if(view==='cup'){CUP.move(e);return}if(view==='window'){WIN.move(e);return}const mp=mapPtr.get(e.pointerId);
   if(mp){if(Math.abs(e.clientX-mp.sx)>7||Math.abs(e.clientY-mp.sy)>7)mp.moved=true;
     if(mp.moved)mapDrag(mp,e.clientX,e.clientY);return}
   const w=swipes.get(e.pointerId);
@@ -1666,7 +1684,7 @@ cv.addEventListener('pointermove',e=>{if(view==='cup'){CUP.move(e);return}if(vie
   if(w){const now=performance.now(),dt=Math.max(8,now-w.t)/1000,vx=(e.clientX-w.x)/dt,vy=(e.clientY-w.y)/dt;w.x=e.clientX;w.y=e.clientY;w.t=now;
     if(Math.hypot(vx,vy)>450&&now-w.last>70){w.last=now;const k=Math.min(1,900/Math.hypot(vx,vy));shake(vx*k*0.8,vy*k*0.8)}return}
   const p=grabs.get(e.pointerId);if(!p)return;const {x,y}=pointAt(e);p.fx=x;p.fy=y});
-function release(e){if(view==='cup'){CUP.up(e);return}if(view==='window'){WIN.up(e);return}const mp=mapPtr.get(e.pointerId);if(mp){mapPtr.delete(e.pointerId);if(e.type==='pointerup'&&!mp.moved)mapTap(e.clientX,e.clientY);if(performance.now()-mp.lt>90){cam.vx=0;glb.vlon=glb.vlat=0}return}
+function release(e){if(view==='slime'){SLIME.up(e);return}if(view==='cup'){CUP.up(e);return}if(view==='window'){WIN.up(e);return}const mp=mapPtr.get(e.pointerId);if(mp){mapPtr.delete(e.pointerId);if(e.type==='pointerup'&&!mp.moved)mapTap(e.clientX,e.clientY);if(performance.now()-mp.lt>90){cam.vx=0;glb.vlon=glb.vlat=0}return}
   if(swipes.has(e.pointerId)&&SC.lift)SC.lift();swipes.delete(e.pointerId);const p=grabs.get(e.pointerId);if(!p)return;grabs.delete(e.pointerId);
   if(p.state==='pull'){p.state='settle';p.vx=p.vy=0;return}
   if(p.state!=='held')return;
@@ -1681,7 +1699,8 @@ cv.addEventListener('pointerup',release);cv.addEventListener('pointercancel',rel
 // ---------- UI ----------
 const sub=document.getElementById('sub'),panel=document.getElementById('panel');
 function updUI(){
-  document.getElementById('cupNRow').hidden=view!=='cup';
+  document.getElementById('cupNRow').hidden=view!=='cup';document.getElementById('slmNRow').hidden=view!=='slime';document.getElementById('slmSRow').hidden=view!=='slime';
+  if(view==='slime'){for(const id of['viewRow','sizeRow','winNRow','winDRow','winMRow'])document.getElementById(id).hidden=true;SLIME.ui();return}
   if(view==='cup'){for(const id of['viewRow','sizeRow','winNRow','winDRow','winMRow'])document.getElementById(id).hidden=true;CUP.ui();return}
   {const isW=view==='window';document.getElementById('viewRow').hidden=!isW;document.getElementById('sizeRow').hidden=isW;document.getElementById('winNRow').hidden=!isW;document.getElementById('winDRow').hidden=!isW;document.getElementById('winMRow').hidden=!isW;
    if(!isW){document.getElementById('pick').hidden=true;document.getElementById('refog').hidden=true}else{WIN.ui();return}}
@@ -1732,15 +1751,16 @@ let resetArm=0;const prBtn=document.getElementById('pondReset');
 prBtn.addEventListener('click',()=>{audio();if(performance.now()-resetArm>3000){resetArm=performance.now();prBtn.textContent='本当にくもらせる？';setTimeout(()=>{prBtn.textContent='ぜんぶくもらせる'},3000);return}
   PL.done.fill(0);PL.save();PL.announced=false;if(PL.world.unjoin)PL.world.unjoin();try{localStorage.removeItem(PL.allKey)}catch(e){}prBtn.textContent='ぜんぶくもらせる';updUI();toast('ぜんぶくもりました。また区画ごとにそろえられます')});
 function choosePic(k){picKey=k;try{localStorage.setItem('mizutama-jigsaw-pic',picKey)}catch(e){}
-  CUP.leave();
+  CUP.leave();SLIME.leave();
+  if(k==='slime'){WIN.leave();view='slime';frozenReg=-1;live=false;SLIME.enter();sBack();return}
   if(k==='cup'){WIN.leave();view='cup';frozenReg=-1;live=false;CUP.enter();sBack();return}
   if(k==='window'){view='window';frozenReg=-1;live=false;WIN.enter();sBack();return}
   WIN.leave();
   if(k in PLANETS){newScene();backToMap();return}
   view='puzzle';frozenReg=-1;build(nPieces);jiggle(board,1.4);sBack()}
 document.querySelectorAll('.pk').forEach(b=>b.addEventListener('click',()=>{audio();choosePic(b.dataset.k)}));
-document.getElementById('scatter').addEventListener('click',()=>{audio();if(view==='cup')CUP.scatter();else if(view==='window')WIN.jScatter();else scatter()});
-document.getElementById('restart').addEventListener('click',()=>{audio();if(view==='cup'){CUP.reset();sBack();return}build(nPieces,false);jiggle(board,1.2);sBack()});
+document.getElementById('scatter').addEventListener('click',()=>{audio();if(view==='slime')SLIME.scatter();else if(view==='cup')CUP.scatter();else if(view==='window')WIN.jScatter();else scatter()});
+document.getElementById('restart').addEventListener('click',()=>{audio();if(view==='slime'){SLIME.reset();sBack();return}if(view==='cup'){CUP.reset();sBack();return}build(nPieces,false);jiggle(board,1.2);sBack()});
 
 // ---------- 雨の窓（水滴を集めて、窓の外を見る） ----------
 const hexRGB=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
@@ -2222,7 +2242,7 @@ const WIN={kind:'park',ds:1.4,stage:'start',jn:2,jMode:'drop',qE:null,pad:docume
 acReset.push(()=>{WIN.rn=null});
 try{const k=localStorage.getItem('mizutama-window-kind');if(k==='night'||k==='park')WIN.kind=k;const n=+localStorage.getItem('mizutama-window-lv');if([1,2,3].includes(n))WIN.jn=n;if(localStorage.getItem('mizutama-window-mode')==='jelly')WIN.jMode='jelly';if(localStorage.getItem('mizutama-window-drop')==='1')WIN.ds=1}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)WIN.rainSound(false)});
-document.getElementById('pick').addEventListener('click',()=>{audio();if(view==='cup')CUP.panelOpen=!CUP.panelOpen;else WIN.panelOpen=!WIN.panelOpen;updUI();sBack()});
+document.getElementById('pick').addEventListener('click',()=>{audio();if(view==='slime')SLIME.panelOpen=!SLIME.panelOpen;else if(view==='cup')CUP.panelOpen=!CUP.panelOpen;else WIN.panelOpen=!WIN.panelOpen;updUI();sBack()});
 document.getElementById('refog').addEventListener('click',()=>{audio();WIN.reset();WIN.panelOpen=false;updUI();bloop(400,200,.4,.06);toast('窓が、また水玉になりました')});
 document.querySelectorAll('.vw[data-n]').forEach(b=>b.addEventListener('click',()=>{audio();WIN.jn=+b.dataset.n;try{localStorage.setItem('mizutama-window-lv',WIN.jn)}catch(e){}WIN.reset();WIN.panelOpen=true;updUI();sBack()}));
 document.querySelectorAll('.vw[data-d]').forEach(b=>b.addEventListener('click',()=>{audio();WIN.ds=+b.dataset.d;try{localStorage.setItem('mizutama-window-drop',WIN.ds)}catch(e){}
@@ -2607,14 +2627,235 @@ try{const n=+localStorage.getItem('mizutama-cup-lv');if([1,2,3].includes(n))CUP.
 document.querySelectorAll('.vw[data-cn]').forEach(b=>b.addEventListener('click',()=>{audio();CUP.lv=+b.dataset.cn;try{localStorage.setItem('mizutama-cup-lv',CUP.lv)}catch(e){}CUP.reset();sBack()}));
 
 
+// ---------- 緑のスライム（まどに投げるとペタッ、くるくる回って下りてくる） ----------
+const SOM=[8.5,12,15.5],SZE=.3;
+function smodal(o,dt){for(let n=0;n<3;n++){const w=SOM[n];for(let j=0;j<2;j++){const i=n*2+j;
+  o.mv[i]+=(-w*w*o.m[i]-2*SZE*w*o.mv[i])*dt;o.m[i]+=o.mv[i]*dt;o.m[i]=Math.max(-.45,Math.min(.45,o.m[i]))}}}
+const angD=(a,b)=>{let d=(a-b)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d};
+const SSHAPE={
+  maru:()=>1,
+  hito:t=>{const L=[[-Math.PI/2,.5,1],[-.35,.33,.93],[Math.PI+.35,.33,.93],[1.15,.3,1],[Math.PI-1.15,.3,1]];let v=0;for(const [a,w,k] of L){const d=angD(t,a)/w;v=Math.max(v,k*Math.exp(-d*d))}return .5+.5*v},
+  hoshi:t=>.64+.36*Math.cos(5*(t+Math.PI/2))};
+const STAB={};for(const k in SSHAPE){const a=[];for(let i=0;i<48;i++)a.push(SSHAPE[k](i/48*TAU));STAB[k]=a}
+function slimePath(g,tab,m,r){const K=tab.length,p=[];
+  for(let i=0;i<K;i++){const t=i/K*TAU,q=r*tab[i]*(1+m[0]*Math.cos(2*t)+m[1]*Math.sin(2*t)+m[2]*Math.cos(3*t)+m[3]*Math.sin(3*t)+m[4]*Math.cos(4*t)+m[5]*Math.sin(4*t));p.push([Math.cos(t)*q,Math.sin(t)*q])}
+  g.beginPath();const mid=i=>{const a=p[i%K],b=p[(i+1)%K];return[(a[0]+b[0])/2,(a[1]+b[1])/2]};let s=mid(0);g.moveTo(s[0],s[1]);
+  for(let i=1;i<=K;i++){const a=p[i%K],q=mid(i);g.quadraticCurveTo(a[0],a[1],q[0],q[1])}g.closePath()}
+const sSplat=()=>{bloop(220,90,.16,.16,0,'triangle');bloop(1300,420,.05,.06,.01)};
+const sGoo=()=>{bloop(150,330,.26,.11,0,'triangle');bloop(430,190,.18,.05,.09)};
+const sStep=()=>bloop(300,170,.08,.06,0,'triangle');
+const sFlip=()=>bloop(480,760,.06,.025);
+const sJelly=()=>{for(let i=0;i<3;i++)bloop(210-i*30,140-i*20,.2,.09,i*.08,'triangle')};
+const sThump=()=>bloop(150,80,.14,.1,0,'triangle');
+
+const SLIME={stage:'whole',lv:2,shape:'hito',panelOpen:true,G:{x:0,y:0,w:0,h:0},sd:1,ft:12,sill:18,floor:0,
+  pic:document.createElement('canvas'),bg:document.createElement('canvas'),B:null,jp:[],grab:new Map(),strands:[],t:0,
+  meld:1,meldT:1,wob:mk(),blink:0,nb:2,lastSnd:0,
+  /* --- 大きさと位置 --- */
+  layout(){if(!W||view!=='slime')return;const top=HB+4,bot=H-8,av=bot-top;
+    let gh=av*(W>H?.72:.64),gw=Math.min(W-40,gh*1.15,820);gh=Math.min(gh,gw*1.35);
+    const nw=Math.max(120,Math.round(gw)),nh=Math.max(140,Math.round(gh)),o=this.G,sd=Math.min(DPR,coarse?1.5:2),ch=o.w!==nw||o.h!==nh||sd!==this.sd||!this.B;
+    this.G={x:Math.round((W-nw)/2),y:Math.round(top+this.ft+4),w:nw,h:nh};this.sd=sd;{const pb=parseFloat(getComputedStyle(panel).paddingBottom)||18;this.floor=H-Math.max(8,pb-12)}
+    if(ch){this.blobGeo();this.renderPic();this.renderBg();if(this.jp.length)this.place()}
+    for(const p of this.jp){if(p.state==='home'){p.x=this.G.x+p.hx;p.y=this.G.y+p.hy}else{p.x=Math.max(0,Math.min(W,p.x));p.y=Math.max(HB,Math.min(this.floor,p.y))}}},
+  blobGeo(){const {w,h}=this.G;this.B={cx:w*.5,cy:h*.5,rx:w*.37,ry:h*.34,U:Math.min(w,h)}},
+  inBlob(x,y){const B=this.B,ny=(y-B.cy)/B.ry,rxy=B.rx*(1+.16*Math.max(0,ny));return((x-B.cx)/rxy)**2+ny*ny<1},
+  blobPath(g){const B=this.B;g.beginPath();for(let i=0;i<=72;i++){const t=i/72*TAU,s=Math.sin(t),x=B.cx+B.rx*(1+.16*Math.max(0,s))*Math.cos(t),y=B.cy+B.ry*s;i?g.lineTo(x,y):g.moveTo(x,y)}g.closePath()},
+  /* スライムの絵（ピースはここから切りぬく） */
+  renderPic(){const {w,h}=this.G,B=this.B,sd=this.sd,c=this.pic;c.width=Math.max(1,Math.round(w*sd));c.height=Math.max(1,Math.round(h*sd));
+    const g=c.getContext('2d');g.setTransform(sd,0,0,sd,0,0);g.clearRect(0,0,w,h);const {cx,cy,rx,ry}=B;
+    for(const [dx,r] of [[-.42,.09],[.05,.12],[.48,.08]]){const x=cx+rx*dx,y=cy+ry*.9;g.fillStyle='#3fae38';g.beginPath();g.ellipse(x,y+r*ry*.6,r*rx*.7,r*ry*1.6,0,0,TAU);g.fill()}
+    this.blobPath(g);let gr=g.createRadialGradient(cx-rx*.35,cy-ry*.45,rx*.1,cx,cy,Math.max(rx,ry)*1.15);gr.addColorStop(0,'#b6f58a');gr.addColorStop(.45,'#5fd04a');gr.addColorStop(1,'#2b8f2e');g.fillStyle=gr;g.fill();
+    g.save();this.blobPath(g);g.clip();
+    const R=(a,b)=>a+((Math.sin(a*91.7+b*13.3)+1)/2)*(b-a);
+    for(let i=0;i<16;i++){const x=cx+rx*(R(i,1)*1.6-.8),y=cy+ry*(R(i+40,1)*1.5-.6),r=B.U*(.012+.03*R(i+80,1));g.fillStyle='rgba(220,255,200,.28)';g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;g.beginPath();g.arc(x-r*.2,y-r*.2,r*.6,Math.PI*1.1,Math.PI*1.6);g.stroke()}
+    const star=(x,y,r,col)=>{g.fillStyle=col;g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}g.closePath();g.fill();g.fillStyle='rgba(255,255,255,.5)';g.beginPath();g.arc(x-r*.2,y-r*.3,r*.18,0,TAU);g.fill()};
+    star(cx-rx*.55,cy+ry*.45,B.U*.045,'#ff7fb0');
+    g.fillStyle='#ffd24a';g.beginPath();g.arc(cx+rx*.58,cy+ry*.4,B.U*.035,0,TAU);g.fill();g.strokeStyle='#d9a21f';g.lineWidth=2;g.beginPath();g.arc(cx+rx*.58,cy+ry*.4,B.U*.024,0,TAU);g.stroke();
+    gr=g.createRadialGradient(cx+rx*.1-B.U*.01,cy+ry*.72-B.U*.01,1,cx+rx*.1,cy+ry*.72,B.U*.03);gr.addColorStop(0,'#cfe8ff');gr.addColorStop(1,'#3d7fe0');g.fillStyle=gr;g.beginPath();g.arc(cx+rx*.1,cy+ry*.72,B.U*.03,0,TAU);g.fill();
+    g.fillStyle='#e8433c';for(const dx of[-.02,.03]){g.beginPath();g.arc(cx-rx*.18+dx*B.U,cy-ry*.62+Math.abs(dx)*B.U*.3,B.U*.022,0,TAU);g.fill()}
+    g.strokeStyle='#3d7a2a';g.lineWidth=1.5;g.beginPath();g.moveTo(cx-rx*.18-.02*B.U,cy-ry*.62);g.quadraticCurveTo(cx-rx*.18,cy-ry*.72,cx-rx*.18+.01*B.U,cy-ry*.78);g.lineTo(cx-rx*.18+.03*B.U,cy-ry*.62);g.stroke();
+    const ex=rx*.3,ey=cy-ry*.18,er=B.U*.07;
+    for(const e of[-1,1]){g.fillStyle='#fff';g.beginPath();g.ellipse(cx+e*ex,ey,er,er*1.15,0,0,TAU);g.fill();g.fillStyle='#1d2a1a';g.beginPath();g.ellipse(cx+e*ex+er*.15,ey+er*.15,er*.55,er*.65,0,0,TAU);g.fill();
+      g.fillStyle='#fff';g.beginPath();g.arc(cx+e*ex-er*.05,ey-er*.15,er*.22,0,TAU);g.fill();g.beginPath();g.arc(cx+e*ex+er*.35,ey+er*.4,er*.1,0,TAU);g.fill()}
+    g.fillStyle='rgba(255,190,205,.6)';for(const e of[-1,1]){g.beginPath();g.ellipse(cx+e*rx*.5,cy+ry*.02,er*.7,er*.38,0,0,TAU);g.fill()}
+    g.fillStyle='#1f5a1c';g.beginPath();g.moveTo(cx-rx*.2,cy+ry*.06);g.quadraticCurveTo(cx,cy+ry*.42,cx+rx*.2,cy+ry*.06);g.closePath();g.fill();
+    g.fillStyle='#ff8fa0';g.beginPath();g.ellipse(cx,cy+ry*.24,rx*.09,ry*.07,0,0,TAU);g.fill();
+    gr=g.createRadialGradient(cx,cy,Math.min(rx,ry)*.6,cx,cy,Math.max(rx,ry)*1.05);gr.addColorStop(0,'rgba(20,80,20,0)');gr.addColorStop(1,'rgba(20,80,20,.35)');g.fillStyle=gr;g.fillRect(0,0,w,h);
+    g.restore();
+    g.save();g.translate(cx-rx*.5,cy-ry*.62);g.rotate(-.6);g.fillStyle='rgba(255,255,255,.55)';g.beginPath();g.ellipse(0,0,rx*.22,ry*.06,0,0,TAU);g.fill();g.restore();
+    g.fillStyle='rgba(255,255,255,.7)';g.beginPath();g.arc(cx-rx*.25,cy-ry*.78,B.U*.012,0,TAU);g.fill();
+    this.blobPath(g);g.strokeStyle='rgba(25,90,25,.45)';g.lineWidth=1.5;g.stroke()},
+  /* まど（そとの景色とわく） */
+  renderBg(){const {w,h}=this.G,ft=this.ft,sl=this.sill,sd=this.sd,c=this.bg,W2=w+ft*2+16,H2=h+ft*2+sl+10;c.width=Math.round(W2*sd);c.height=Math.round(H2*sd);
+    const g=c.getContext('2d');g.setTransform(sd,0,0,sd,0,0);g.clearRect(0,0,W2,H2);g.translate(8,0);const x0=ft,y0=ft,U=Math.min(w,h);
+    g.fillStyle='rgba(18,66,72,.18)';rrect(g,6,10,w+ft*2,h+ft*2,8);g.fill();
+    let gr=g.createLinearGradient(0,y0,0,y0+h);gr.addColorStop(0,'#a6dcf6');gr.addColorStop(.62,'#e4f5fc');gr.addColorStop(.62,'#9fd486');gr.addColorStop(1,'#7cc06a');g.fillStyle=gr;g.fillRect(x0,y0,w,h);
+    g.fillStyle='rgba(255,255,255,.9)';for(const [a,b,s] of [[.2,.12,1],[.75,.2,.8],[.5,.32,.55]]){const X=x0+w*a,Y=y0+h*b,S=U*.05*s;g.beginPath();g.arc(X,Y,S,0,TAU);g.arc(X+S*1.1,Y+S*.2,S*.8,0,TAU);g.arc(X-S*1.1,Y+S*.25,S*.7,0,TAU);g.fill()}
+    g.fillStyle='#8cc77a';g.beginPath();g.moveTo(x0,y0+h*.62);for(let k=0;k<=10;k++)g.lineTo(x0+w*k/10,y0+h*(.58-Math.sin(k*1.3)*.03));g.lineTo(x0+w,y0+h*.62);g.fill();
+    for(const [a,s] of [[.12,1],[.88,.8]]){const X=x0+w*a,Y=y0+h*.66,S=U*.09*s;g.fillStyle='#7a5a3a';g.fillRect(X-S*.12,Y-S*.6,S*.24,S*.7);g.fillStyle='#4f9a45';g.beginPath();g.arc(X,Y-S*.9,S*.6,0,TAU);g.arc(X-S*.4,Y-S*.6,S*.45,0,TAU);g.arc(X+S*.4,Y-S*.6,S*.45,0,TAU);g.fill()}
+    for(let i=0;i<14;i++){const X=x0+w*((i*.137+.05)%1),Y=y0+h*(.76+((i*.31)%1)*.2);g.fillStyle=['#ffd24a','#ff8fb0','#ffffff'][i%3];g.beginPath();g.arc(X,Y,U*.008,0,TAU);g.fill()}
+    g.fillStyle='rgba(255,255,255,.12)';g.fillRect(x0,y0,w,h);
+    g.save();g.beginPath();g.rect(x0,y0,w,h);g.clip();g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.moveTo(x0+w*.55,y0);g.lineTo(x0+w*.72,y0);g.lineTo(x0+w*.3,y0+h);g.lineTo(x0+w*.13,y0+h);g.fill();
+    g.fillStyle='rgba(255,255,255,.1)';g.beginPath();g.moveTo(x0+w*.78,y0);g.lineTo(x0+w*.83,y0);g.lineTo(x0+w*.41,y0+h);g.lineTo(x0+w*.36,y0+h);g.fill();g.restore();
+    gr=g.createLinearGradient(0,0,0,h+ft*2);gr.addColorStop(0,'#fbf8f2');gr.addColorStop(1,'#e6ddcf');g.fillStyle=gr;rrect(g,0,0,w+ft*2,h+ft*2,8);g.rect(x0,y0,w,h);g.fill('evenodd');
+    g.strokeStyle='rgba(80,70,55,.3)';g.lineWidth=1;rrect(g,.5,.5,w+ft*2-1,h+ft*2-1,8);g.stroke();g.strokeStyle='rgba(0,0,0,.18)';g.strokeRect(x0-.5,y0-.5,w+1,h+1);
+    g.fillStyle='#ece2d2';rrect(g,-6,h+ft*2-4,w+ft*2+12,sl,4);g.fill();g.fillStyle='rgba(80,60,40,.18)';g.fillRect(-6,h+ft*2+sl-6,w+ft*2+12,2)},
+
+  /* --- ピース --- */
+  build(){const {w,h}=this.G,B=this.B,N=[7,12,19][this.lv-1]||12;let best=null,bd=1e9;
+    for(let sp=B.U*.6;sp>B.U*.05;sp*=.96){const pts=[],rh=sp*.866;let row=0;
+      for(let y=B.cy-B.ry+rh*.4;y<=B.cy+B.ry;y+=rh,row++)for(let x=B.cx-B.rx*1.2+(row%2?sp*.5:0);x<=B.cx+B.rx*1.2;x+=sp)if(this.inBlob(x,y)&&this.inBlob(x+sp*.25,y)&&this.inBlob(x-sp*.25,y))pts.push({x,y});
+      const d=Math.abs(pts.length-N);if(pts.length>=3&&d<bd){bd=d;best={pts,sp}}if(pts.length>N+4)break}
+    this.jp=best.pts.map(o=>({a:o.x/w,b:o.y/h,rr:best.sp*.66/B.U,state:'home',torn:false,x:0,y:0,vx:0,vy:0,fx:0,fy:0,ox:0,oy:0,ang:0,sq:0,lift:0,z:1,wait:0,cr:null,...mk()}));
+    this.grab.clear();this.strands=[];this.place()},
+  place(){const {w,h}=this.G,U=this.B.U;for(const p of this.jp){p.hx=p.a*w;p.hy=p.b*h;p.r=p.rr*U;if(p.state==='home'){p.x=this.G.x+p.hx;p.y=this.G.y+p.hy}}},
+  reset(){if(!this.B)this.layout();this.build();this.stage='whole';this.meld=1;this.meldT=1;this.panelOpen=true;updUI()},
+  enter(){this.layout();this.reset()},
+  leave(){this.grab.clear()},
+  front(p){const i=this.jp.indexOf(p);if(i>=0){this.jp.splice(i,1);this.jp.push(p)}},
+  inGlass(x,y,m=0){const G=this.G;return x>G.x+m&&x<G.x+G.w-m&&y>G.y+m&&y<G.y+G.h-m},
+  slotD(p){return Math.hypot(p.x-this.G.x-p.hx,p.y-this.G.y-p.hy)},
+  near(p,s){for(const q of this.jp)if(q!==p&&q.state==='home'&&Math.hypot(q.hx-p.hx,q.hy-p.hy)<p.r*2.3)jiggle(q,s)},
+  tear(p){p.torn=true;this.meldT=0;if(this.stage==='whole'&&this.jp.every(q=>q.torn)){this.stage='play';this.panelOpen=false;updUI()}},
+  scatter(){if(this.stage!=='whole')return;const list=this.jp.filter(p=>p.state==='home');
+    list.forEach((p,i)=>{p.state='pop';p.wait=i*.07;p.torn=true});this.meldT=0;this.stage='play';this.panelOpen=false;updUI()},
+  splat(p){p.state='stuck';p.vx=p.vy=0;p.sq=1;p.lift=0;jiggle(p,1.2);sSplat();screenRip.push({x:p.x,y:p.y,t:0,s:.5});
+    if(this.slotD(p)<p.r*.6){this.settle(p);return}p.cr={ph:'hold',t:rnd(.55,.9),dir:Math.random()<.5?1:-1}},
+  settle(p){p.state='settle';p.ang=angD(p.ang,0);p.vx=p.vy=0;p.cr=null},
+  arrive(p){p.state='home';p.ang=0;p.vx=p.vy=0;p.sq=.7;jiggle(p,1.3);this.near(p,.8);screenRip.push({x:this.G.x+p.hx,y:this.G.y+p.hy,t:0,s:.6});
+    const k=this.jp.filter(q=>q.torn&&q.state==='home').length;sStep();if(p.torn&&k>0)setTimeout(()=>sMerge(k-1),60);
+    if(this.stage==='play'){sub.innerHTML=`くっついたスライム <b>${k}</b> / ${this.jp.length}`;if(this.jp.every(q=>q.state==='home'))this.finish()}},
+  finish(){this.stage='done';this.meldT=1;setTimeout(sDone,250);setTimeout(()=>{kick(this.wob,Math.PI/2,-3);sJelly()},500);
+    toast('スライムができあがりました！ つついてみてください');this.panelOpen=false;updUI();
+    setTimeout(()=>{if(this.stage==='done'&&view==='slime'&&!this.panelOpen){this.panelOpen=true;updUI()}},2400)},
+  /* ぬちゃっとのびる糸 */
+  strand(ax,ay,p){this.strands.push({ax,ay,p,t:0,bx:p.x,by:p.y})},
+
+  update(dt){this.t+=dt;flushMotion();for(let i=screenRip.length-1;i>=0;i--){screenRip[i].t+=dt;if(screenRip[i].t>1.4)screenRip.splice(i,1)}
+    if(!this.B)return;const G=this.G,g=1500;
+    this.meld+=(this.meldT-this.meld)*Math.min(1,dt*(this.meldT?2.2:8));smodal(this.wob,dt);
+    this.nb-=dt;if(this.nb<0){this.blink=.16;this.nb=rnd(2,5)}this.blink=Math.max(0,this.blink-dt);
+    for(let i=this.strands.length-1;i>=0;i--){const s=this.strands[i];s.t+=dt;if(s.t>.35)this.strands.splice(i,1)}
+    for(const p of this.jp){const tx=G.x+p.hx,ty=G.y+p.hy;p.sq=Math.max(0,p.sq-dt*3);
+      const zt=p.state==='free'||p.state==='pop'||(p.state==='held'&&!this.inGlass(p.x,p.y))?.74:1;p.z+=(zt-p.z)*Math.min(1,dt*7);const r=p.r*p.z;
+      switch(p.state){
+      case 'peel':{const vx=p.fx-p.ax,vy=p.fy-p.ay,len=Math.hypot(vx,vy)||1e-6,k=Math.min(len*.38,r*.65);p.x=p.ax+vx/len*k;p.y=p.ay+vy/len*k;
+        const e=Math.min(.38,len/r*.3),a=Math.atan2(vy,vx)-p.ang;p.m.fill(0);p.mv.fill(0);p.m[0]=e*Math.cos(2*a);p.m[1]=e*Math.sin(2*a);
+        if(len>r*1.25){p.state='held';p.ox=p.x-p.fx;p.oy=p.y-p.fy;p.vx=p.vy=0;this.strand(p.ax,p.ay,p);sGoo();jiggle(p,1);this.tear(p);if(p.wasHome)this.near(p,.8)}break}
+      case 'held':{const d=Math.exp(-dt*6);p.ox*=d;p.oy*=d;const gx=p.fx+p.ox,gy=p.fy+p.oy,kk=Math.min(1,dt*14),nx=p.x+(gx-p.x)*kk,ny=p.y+(gy-p.y)*kk,vx=(nx-p.x)/dt,vy=(ny-p.y)/dt;
+        const ax=(vx-p.vx)/dt,ay=(vy-p.vy)/dt;p.vx+=(vx-p.vx)*.5;p.vy+=(vy-p.vy)*.5;p.x=nx;p.y=ny;p.lift+=(1-p.lift)*Math.min(1,dt*8);const am=Math.hypot(ax,ay);if(am>700)kick(p,Math.atan2(ay,ax)-p.ang,Math.min(am,30000)*.00028*dt);break}
+      case 'throw':{p.tt+=dt;const k=Math.min(1,p.tt/p.td),e=1-(1-k)*(1-k);p.x=p.sx+(p.ex-p.sx)*e;p.y=p.sy+(p.ey-p.sy)*e;p.ang+=p.spin*dt;p.lift=1-e;if(k>=1)this.splat(p);break}
+      case 'pop':{if(p.wait>0){p.wait-=dt;break}this.strand(p.x,p.y,p);sGoo();p.state='free';p.vx=rnd(-260,260);p.vy=rnd(-420,-200);p.ang=0;jiggle(p,1.2);break}
+      case 'stuck':{const c=p.cr;if(!c)break;c.t-=dt;
+        if(c.ph==='hold'){p.m[0]+=(.06-p.m[0])*Math.min(1,dt*2)*.3;if(c.t<=0){c.ph='flip';c.T=c.t=.5;c.a0=p.ang;c.da=c.dir*rnd(1.3,2.1);c.x0=p.x;c.y0=p.y;c.dx=c.dir*r*rnd(.05,.2);c.dy=r*rnd(.5,.8);sFlip()}}
+        else{const k=1-Math.max(0,c.t)/c.T,e=k*k*(3-2*k);p.ang=c.a0+c.da*e;p.x=c.x0+c.dx*e;p.y=c.y0+c.dy*e;p.lift=Math.sin(k*Math.PI)*.45;
+          if(c.t<=0){p.lift=0;sStep();p.sq=.5;kick(p,Math.PI/2-p.ang,-.8);c.ph='hold';c.t=rnd(.45,.85);if(Math.random()<.35)c.dir*=-1;
+            if(this.slotD(p)<r*.7){this.settle(p);break}}}
+        p.x=Math.max(G.x+r*.3,Math.min(G.x+G.w-r*.3,p.x));
+        if(p.y>G.y+G.h-r*.3){p.state='free';p.cr=null;p.vx=rnd(-30,30);p.vy=30;this.strand(p.x,p.y-r*.3,p);sGoo()}break}
+      case 'settle':{const ax=(tx-p.x)*120-p.vx*14,ay=(ty-p.y)*120-p.vy*14;p.vx+=ax*dt;p.vy+=ay*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.ang*=Math.exp(-dt*9);p.lift*=.9;
+        if(Math.hypot(tx-p.x,ty-p.y)<1.5&&Math.hypot(p.vx,p.vy)<30&&Math.abs(p.ang)<.03)this.arrive(p);break}
+      case 'free':{p.vy+=g*dt;const d=Math.exp(-dt*.8);p.vx*=d;p.x+=p.vx*dt;p.y+=p.vy*dt;p.lift*=.9;const fl=this.floor-r*1.0;
+        if(p.y>fl){p.y=fl;if(p.vy>260){jiggle(p,Math.min(1.2,p.vy/700));kick(p,Math.PI/2-p.ang,-Math.min(2.5,p.vy/400));if(this.t-this.lastSnd>.06){this.lastSnd=this.t;sThump()}}p.vy=-p.vy*.12;p.vx*=Math.exp(-dt*6)}
+        if(p.x<r*.6){p.x=r*.6;p.vx=Math.abs(p.vx)*.3}if(p.x>W-r*.6){p.x=W-r*.6;p.vx=-Math.abs(p.vx)*.3}if(p.y<HB){p.y=HB;p.vy=Math.abs(p.vy)*.3}
+        if(p.y>=fl-1)p.ang+=p.vx*dt/r*.6;break}
+      case 'home':p.x=tx;p.y=ty;p.lift=0;break}
+      if(p.state!=='peel')smodal(p,dt)}
+    const fr=this.jp.filter(p=>p.state==='free');
+    for(let it=0;it<2;it++)for(let i=0;i<fr.length;i++)for(let j=i+1;j<fr.length;j++){const a=fr[i],b=fr[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-3,min=(a.r*a.z+b.r*b.z)*.78;
+      if(d<min){const push=(min-d)*.5,nx=dx/d,ny=dy/d;a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push;
+        const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(rv<0){a.vx+=nx*rv*.5;a.vy+=ny*rv*.5;b.vx-=nx*rv*.5;b.vy-=ny*rv*.5}}}
+    for(const p of fr){const fl=this.floor-p.r*p.z*1.0;if(p.y>fl)p.y=fl}},
+
+  /* --- さわる --- */
+  down(e){const x=e.clientX,y=e.clientY,st=this.stage;if(this.panelOpen){this.panelOpen=false;updUI()}
+    if(st==='done'){const B=this.B;if(this.inBlob(x-this.G.x,y-this.G.y)){kick(this.wob,Math.PI/2,-2.6);jiggle(this.wob,1);sJelly();this.blink=.25;return}screenRip.push({x,y,t:0});sWater();return}
+    for(let i=this.jp.length-1;i>=0;i--){const p=this.jp[i];if(!['free','stuck','settle','throw'].includes(p.state))continue;
+      if(Math.hypot(p.x-x,p.y-y)<p.r*p.z*.85+10){this.front(p);this.grab.set(e.pointerId,p);p.fx=x;p.fy=y;p.wasHome=false;
+        if(p.state==='stuck'){p.state='peel';p.ax=p.x;p.ay=p.y;p.cr=null;sGrab()}else{p.state='held';p.ox=p.x-x;p.oy=p.y-y;p.vx=p.vy=0;jiggle(p,.8);sGrab()}return}}
+    let best=null,bd=1e9;for(const p of this.jp){if(p.state!=='home')continue;const d=Math.hypot(this.G.x+p.hx-x,this.G.y+p.hy-y);if(d<p.r*.95&&d<bd){bd=d;best=p}}
+    if(best){const p=best;this.front(p);p.state='peel';p.ax=this.G.x+p.hx;p.ay=this.G.y+p.hy;p.fx=x;p.fy=y;p.wasHome=true;this.grab.set(e.pointerId,p);sGrab();this.meldT=0;return}
+    screenRip.push({x,y,t:0});sWater()},
+  move(e){const p=this.grab.get(e.pointerId);if(p){p.fx=e.clientX;p.fy=e.clientY}},
+  up(e){const p=this.grab.get(e.pointerId);if(!p)return;this.grab.delete(e.pointerId);
+    if(p.state==='peel'){p.m.fill(0);if(p.wasHome){p.state='settle';p.vx=p.vy=0;if(this.stage==='whole'&&this.jp.every(q=>q.state==='home'||q.state==='settle'))this.meldT=this.jp.some(q=>q.torn)?0:1}else{p.state='stuck';p.x=p.ax;p.y=p.ay;jiggle(p,.8);p.cr={ph:'hold',t:rnd(.4,.8),dir:Math.random()<.5?1:-1}}return}
+    if(p.state!=='held')return;const G=this.G;
+    if(this.slotD(p)<p.r*.6){this.settle(p);sSplat();return}
+    const sp=Math.hypot(p.vx,p.vy),ex=p.x+p.vx*.16,ey=p.y+p.vy*.16,m=p.r*.3;
+    if(this.inGlass(p.x,p.y,m)&&sp<450){this.throwTo(p,p.x,p.y,.08);return}
+    if(sp>=450&&this.inGlass(ex,ey,m)){this.throwTo(p,ex,ey,.18);return}
+    if(sp>=450){const k=.35;for(let s=1;s<=6;s++){const tx=p.x+p.vx*.05*s,ty=p.y+p.vy*.05*s;if(this.inGlass(tx,ty,m)){this.throwTo(p,tx,ty,.2);return}}}
+    p.state='free';p.vx*=.5;p.vy*=.5},
+  throwTo(p,x,y,d){p.state='throw';p.sx=p.x;p.sy=p.y;p.ex=x;p.ey=y;p.tt=0;p.td=d;p.spin=rnd(-6,6)},
+  shake(ax,ay,m){for(const p of this.jp){if(p.state==='free'){p.vx+=ax*.5;p.vy+=ay*.5-Math.min(400,m*.3);jiggle(p,Math.min(1.2,m/450))}
+      else if(p.state==='stuck'&&m>650&&Math.random()<.35){p.state='free';p.cr=null;p.vx=ax*.4;p.vy=ay*.4;this.strand(p.x,p.y,p);sGoo()}
+      else if(p.state==='home')jiggle(p,Math.min(.6,m/800))}
+    if(this.stage==='done'||this.stage==='whole'){kick(this.wob,Math.atan2(ay,ax),-Math.min(2,m/400));if(m>300&&this.t-this.lastSnd>.25){this.lastSnd=this.t;sJelly()}}},
+
+  /* --- 描く --- */
+  pDraw(p){const tab=STAB[this.shape],r=p.r*p.z*(1+.14*p.sq),G=this.G,lift=p.lift||0;
+    ctx.save();ctx.translate(p.x,p.y);
+    ctx.save();ctx.translate(r*(.06+.14*lift),r*(.1+.28*lift));ctx.rotate(p.ang);ctx.fillStyle=`rgba(20,60,20,${(.2+.14*lift).toFixed(3)})`;slimePath(ctx,tab,p.m,r*(1+.04*lift));ctx.fill();ctx.restore();
+    ctx.rotate(p.ang);slimePath(ctx,tab,p.m,r);ctx.save();ctx.clip();
+    ctx.fillStyle='#55c645';ctx.fillRect(-r*1.6,-r*1.6,r*3.2,r*3.2);ctx.drawImage(this.pic,-p.hx,-p.hy,G.w,G.h);
+    ctx.rotate(-p.ang);let gr=ctx.createRadialGradient(-r*.38,-r*.45,r*.03,-r*.25,-r*.3,r*.8);gr.addColorStop(0,'rgba(255,255,255,.62)');gr.addColorStop(.35,'rgba(255,255,255,.14)');gr.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=gr;ctx.fillRect(-r*1.6,-r*1.6,r*3.2,r*3.2);gr=ctx.createRadialGradient(r*.08,r*.1,r*.45,0,0,r*1.05);gr.addColorStop(0,'rgba(15,70,15,0)');gr.addColorStop(1,'rgba(15,70,15,.4)');ctx.fillStyle=gr;ctx.fillRect(-r*1.6,-r*1.6,r*3.2,r*3.2);
+    ctx.restore();ctx.strokeStyle='rgba(30,100,30,.6)';ctx.lineWidth=1.4;ctx.stroke();ctx.restore()},
+  drawStrand(ax,ay,bx,by,r,k){const len=Math.hypot(bx-ax,by-ay);if(len<2)return;const lw=Math.max(1.5,r*.42*(1-Math.min(1,len/(r*2.2))))*k;
+    const mx=(ax+bx)/2,my=(ay+by)/2+len*.12;ctx.lineCap='round';ctx.strokeStyle='rgba(70,180,55,.9)';ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(ax,ay);ctx.quadraticCurveTo(mx,my,bx,by);ctx.stroke();
+    ctx.strokeStyle='rgba(220,255,200,.6)';ctx.lineWidth=Math.max(.8,lw*.25);ctx.beginPath();ctx.moveTo(ax,ay-lw*.2);ctx.quadraticCurveTo(mx,my-lw*.2,bx,by-lw*.2);ctx.stroke()},
+  draw(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);ctx.globalAlpha=1;dots();
+    if(gcv.style.display!=='none')gcv.style.display='none';labelsEl.hidden=true;
+    for(const r of screenRip){const k=r.t/1.4;ctx.globalAlpha=.45*(1-k);ctx.strokeStyle=C.ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(r.x,r.y,10+r.t*60*(r.s||1),0,TAU);ctx.stroke()}ctx.globalAlpha=1;
+    if(!this.B)return;const G=this.G,ft=this.ft,tab=STAB[this.shape];
+    ctx.drawImage(this.bg,G.x-ft-8,G.y-ft,this.bg.width/this.sd,this.bg.height/this.sd);
+    ctx.save();ctx.beginPath();ctx.rect(G.x,G.y,G.w,G.h);ctx.clip();
+    if(this.meld<.99){ctx.globalAlpha=.2;ctx.drawImage(this.pic,G.x,G.y,G.w,G.h);ctx.globalAlpha=1;
+      ctx.save();ctx.setLineDash([5,6]);ctx.strokeStyle='rgba(30,100,30,.28)';ctx.lineWidth=1.2;
+      for(const p of this.jp)if(p.state!=='home'){ctx.save();ctx.translate(G.x+p.hx,G.y+p.hy);slimePath(ctx,tab,[0,0,0,0,0,0],p.r);ctx.stroke();ctx.restore()}ctx.restore()}
+    if(this.meld<.99){ctx.globalAlpha=1-this.meld;for(const p of this.jp)if(p.state==='home')this.pDraw(p);ctx.globalAlpha=1}
+    if(this.meld>.01){const B=this.B,b=this.wob.m[0]*.5+(this.stage==='done'?Math.sin(this.t*2.2)*.012:0),bx=G.x+B.cx,by=G.y+B.cy+B.ry;
+      ctx.save();ctx.globalAlpha=Math.min(1,this.meld*1.5);ctx.translate(bx,by);ctx.scale(1+b,1-b);ctx.translate(-bx,-by);ctx.drawImage(this.pic,G.x,G.y,G.w,G.h);
+      if(this.stage==='done'&&this.blink>0){ctx.fillStyle='#62cf4b';const ex=B.rx*.3,ey=G.y+B.cy-B.ry*.18,er=B.U*.075;for(const e of[-1,1]){ctx.beginPath();ctx.ellipse(G.x+B.cx+e*ex,ey,er,er*1.2,0,0,TAU);ctx.fill();
+        ctx.strokeStyle='#1d2a1a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(G.x+B.cx+e*ex,ey-er*.2,er*.7,Math.PI*.2,Math.PI*.8);ctx.stroke()}}
+      ctx.restore()}
+    for(const p of this.jp)if(p.state==='stuck'||p.state==='settle'||p.state==='peel'&&!p.wasHome)this.pDraw(p);
+    ctx.restore();
+    for(const p of this.jp)if(p.state==='peel')this.drawStrand(p.ax,p.ay,p.x,p.y,p.r,1);
+    for(const s of this.strands){const k=s.t/.35,ex=s.ax+(s.p.x-s.ax)*(1-k)*.5,ey=s.ay+(s.p.y-s.ay)*(1-k)*.5;this.drawStrand(s.ax,s.ay,ex,ey,s.p.r,1-k);this.drawStrand(s.p.x,s.p.y,s.p.x+(ex-s.p.x)*.4,s.p.y+(ey-s.p.y)*.4,s.p.r,1-k)}
+    for(const p of this.jp)if(p.state==='free'||p.state==='pop')this.pDraw(p);
+    for(const p of this.jp)if(p.state==='held'||p.state==='throw'||p.state==='peel'&&p.wasHome)this.pDraw(p)},
+
+  ui(){const $=id=>document.getElementById(id),st=this.stage;
+    for(const id of['scatter','restart','back','shape','pondReset','refog'])$(id).hidden=true;$('scatter').hidden=st!=='whole';$('restart').hidden=st==='whole';
+    skinRow.hidden=true;$('dock').hidden=true;$('slmNRow').hidden=false;$('slmSRow').hidden=false;
+    document.querySelectorAll('.vw[data-sn]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.sn===this.lv));
+    document.querySelectorAll('.vw[data-ss]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ss===this.shape));
+    $('pick').hidden=false;$('pick').textContent=this.panelOpen?'とじる':'えらぶ';
+    document.querySelectorAll('.pk').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k==='slime'));
+    const n=this.jp.length,k=this.jp.filter(p=>p.torn&&p.state==='home').length;
+    sub.innerHTML=st==='whole'?`<b>${n}</b> こにちぎれます`:st==='play'?`くっついたスライム <b>${k}</b> / ${n}`:'スライム <b>できあがり！</b>';
+    const M=st==='done'?['スライムができあがりました！','つつくと、ぷるるん。「はじめから」でもう一度あそべます']
+      :['みどりのスライム','まどにはりついたスライムです。つまんで引っぱると、ぬちゃっとはがれます（「ちらす」で一度に）。まどに投げるとペタッとはりつき、くるくる回りながら下りてきます。正しい場所でピタッとくっつけて完成させましょう'];
+    $('msg').textContent=M[0];$('msg2').textContent=M[1];panel.classList.toggle('off',!this.panelOpen)}
+};
+try{const n=+localStorage.getItem('mizutama-slime-lv');if([1,2,3].includes(n))SLIME.lv=n;const s=localStorage.getItem('mizutama-slime-shape');if(s in SSHAPE)SLIME.shape=s}catch(e){}
+document.querySelectorAll('.vw[data-sn]').forEach(b=>b.addEventListener('click',()=>{audio();SLIME.lv=+b.dataset.sn;try{localStorage.setItem('mizutama-slime-lv',SLIME.lv)}catch(e){}SLIME.reset();sBack()}));
+document.querySelectorAll('.vw[data-ss]').forEach(b=>b.addEventListener('click',()=>{audio();SLIME.shape=b.dataset.ss;try{localStorage.setItem('mizutama-slime-shape',SLIME.shape)}catch(e){}
+  for(const p of SLIME.jp)jiggle(p,1);updUI();sJelly()}));
+
+
 // ---------- start ----------
-const HK={'#chikyu':'globe','#jisyaku':'magnet','#kingyo':'pond','#bidama':'marble','#mado':'window','#yoru':'window','#koppu':'cup'}[location.hash];if(HK)picKey=HK;if(location.hash==='#yoru')WIN.kind='night';
+const HK={'#chikyu':'globe','#jisyaku':'magnet','#kingyo':'pond','#bidama':'marble','#mado':'window','#yoru':'window','#koppu':'cup','#slime':'slime'}[location.hash];if(HK)picKey=HK;if(location.hash==='#yoru')WIN.kind='night';
 if(picKey in PLANETS)view='map';
 if(picKey==='window')view='window';
 if(picKey==='cup')view='cup';
+if(picKey==='slime')view='slime';
 newScene();layout();build(nPieces,false);if(view==='map'){updUI();mapFit(true);panHint=true;setTimeout(()=>toast(GL()?'指で回すと、ぐるりと一周見わたせます':'横にすべらせると、ほかの区画も見わたせます'),600)}
 if(view==='window')WIN.enter();
 if(view==='cup')CUP.enter();
+if(view==='slime')SLIME.enter();
 if(view==='puzzle'&&(location.hash==='#kansei'||HK)){for(const p of pieces)p.torn=true;stage='play';finish();doneShown=true;panel.classList.remove('off')}
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>layout());
 requestAnimationFrame(frame);
