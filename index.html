@@ -2266,7 +2266,7 @@ function sVoice(f0,f1,dur,F,vol,delay=0,vib=0){if(!soundOn)return;const a=audio(
   out.gain.setValueAtTime(.0001,t);out.gain.exponentialRampToValueAtTime(vol,t+.035);out.gain.setValueAtTime(vol,t+dur*.65);out.gain.exponentialRampToValueAtTime(.0001,t+dur);
   for(const [f,q,gn] of F){const b=a.createBiquadFilter();b.type='bandpass';b.frequency.value=f;b.Q.value=q;const g=a.createGain();g.gain.value=gn;o.connect(b).connect(g).connect(out)}
   out.connect(a.destination);o.start(t);o.stop(t+dur+.05)}catch(e){}}
-const sAah=()=>sVoice(400,250,1.05,[[850,6,1.7],[1250,7,1],[2700,9,.35]],.12,0,7);
+const sAah=()=>sVoice(400,250,1.05,[[850,6,1.7],[1250,7,1],[2700,9,.35]],.06,0,7);
 const sOh=()=>sVoice(300,430,.55,[[520,6,1.6],[900,7,.9],[2500,9,.25]],.18,0,4);
 const sYay=()=>{sVoice(380,520,.3,[[400,6,1.2],[2100,8,.7]],.16);sVoice(520,430,.5,[[850,6,1.5],[1250,7,.9]],.17,.28,6)};
 const sNya=(k=1,d=0)=>sVoice(720*k,520*k,.42,[[1300,5,1.2],[2600,7,.6]],.12,d,10);
