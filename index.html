@@ -2398,14 +2398,14 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
   /* --- できごと --- */
   setKid(st){this.kid.st=st;this.kid.t=0},
   say(who,text,dur=1.8,delay=0){this.bub=this.bub.filter(b=>b.who!==who);this.bub.push({who,text,t:-delay,dur})},
-  startle(){this.setKid('aah');this.say('kid','あーっ！',2.1);sAah();const c=this.cat;c.jt=0;c.puff=1;this.say('cat','ニャッ!?',1.6,.18);sNya(1.15,.18)},
+  startle(){this.setKid('aah');this.say('kid','あーっ！',2.1);const c=this.cat;c.jt=0;c.puff=1;this.say('cat','ニャッ!?',1.6,.18);sNya(1.15,.18)},
   spill(){this.makePuddle();this.stage='spill';this.T=0;this.panelOpen=false;this.bub=[];this.setKid('idle');this.hinted=true;updUI()},
   reset(){if(!this.g)this.layout();this.makePuddle();this.stage='stand';this.T=0;this.bub=[];this.setKid('idle');const c=this.cat;c.jt=9;c.puff=0;c.tiltT=0;this.panelOpen=true;this.idle=0;updUI()},
   enter(){this.layout();this.reset()},
   leave(){this.grab.clear();if(view==='cup'){clearTimeout(toastT);document.getElementById('toast').hidden=true}},
-  jFinish(){for(const p of this.jp){p.h=1;p.state='home'}this.stage='back';this.T=this.TEND;this.setKid('wow');this.say('kid','あれれ？',1.6);sOh();
+  jFinish(){for(const p of this.jp){p.h=1;p.state='home'}this.stage='back';this.T=this.TEND;this.setKid('wow');this.say('kid','あれれ？',1.6);
     const c=this.cat;c.tiltT=.35;c.hold=2;this.say('cat','ニャ？',1.4,.35);sNyaQ(.35);updUI()},
-  done(){this.stage='done';this.T=0;sDone();this.setKid('yay');this.say('kid','もとどおり！',2.2,.1);sYay();this.say('cat','ニャ〜ン',1.8,.7);sNya(.85,.7);
+  done(){this.stage='done';this.T=0;sDone();this.setKid('yay');this.say('kid','もとどおり！',2.2,.1);this.say('cat','ニャ〜ン',1.8,.7);sNya(.85,.7);
     toast('こぼれた水が、ぜんぶコップにもどりました');this.panelOpen=false;updUI();
     setTimeout(()=>{if(this.stage==='done'&&view==='cup'&&!this.panelOpen){this.panelOpen=true;updUI()}},2200)},
   poke(who){const st=this.stage;
@@ -2413,7 +2413,7 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
       if(t==='ゴロゴロ…'){for(let i=0;i<6;i++)bloop(70,60,.12,.05,i*.1,'triangle')}else sNya(rnd(.9,1.15));return}
     const k=this.kid;if(k.st==='aah')return;
     const t=st==='stand'?'コップ、さわってみて！':st==='spill'?'あわわ…':st==='whole'||st==='play'?'がんばれー！':st==='back'?'すごーい！':st==='done'?'もう一回？':'えへへ';
-    this.setKid('hehe');this.say('kid',t,1.5);sVoice(330,380,.25,[[700,6,1.2],[1800,8,.6]],.12)},
+    this.setKid('hehe');this.say('kid',t,1.5);bloop(900,1200,.08,.05,0,'triangle')},
 
   /* --- 毎フレーム --- */
   update(dt){this.t+=dt;flushMotion();for(let i=screenRip.length-1;i>=0;i--){screenRip[i].t+=dt;if(screenRip[i].t>1.4)screenRip.splice(i,1)}
