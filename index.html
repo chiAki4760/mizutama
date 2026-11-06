@@ -2271,9 +2271,9 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
     if(!this.wood)this.makeWood();
     this.geo();if(!same||sdC||!this.sg){this.renderScn();if(this.jp.length)this.place()}
     for(const p of this.jp)if(p.state==='home'){p.x=this.G.x+p.hx;p.y=this.G.y+p.hy}else{p.x=Math.max(0,Math.min(W,p.x));p.y=Math.max(HB,Math.min(H,p.y))}},
-  geo(){const w=this.G.w,h=this.G.h,U=Math.min(w,h*.8),yb=h*.45,yf=h*.71,ch=U*.18,cw=ch*.66,bwh=cw*.41,twh=cw*.5;
+  geo(){const w=this.G.w,h=this.G.h,U=Math.min(w,h*.8),yb=h*.45,yf=h*.71,ch=U*.26,cw=ch*.62,bwh=cw*.41,twh=cw*.5;
     this.g={w,h,U,yb,yf,th:Math.max(7,h*.032),bx0:w*.1,bx1:w*.9,fx0:w*.03,fx1:w*.97,fl:h*.8,leg:h*.965,
-      ch,cw,bwh,twh,cx:w*.27,cy:yb+(yf-yb)*.36,A:Math.PI/2-Math.atan((twh-bwh)/ch),
+      ch,cw,bwh,twh,cx:w*.3,cy:yb+(yf-yb)*.38,A:Math.PI/2-Math.atan((twh-bwh)/ch),
       cat:{x:w*.85,y:yb+(yf-yb)*.3,s:U*.1},kid:{x:w*.13,s:U*.07}}},
   topPath(g){const q=this.g;g.beginPath();g.moveTo(q.bx0,q.yb);g.lineTo(q.bx1,q.yb);g.lineTo(q.fx1,q.yf);g.lineTo(q.fx0,q.yf);g.closePath()},
   makeWood(){const cols=['#c98e5a','#c4884f','#cf9763','#c08550','#cb915c','#c68b55'],P=[];
@@ -2330,9 +2330,9 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
   lipW(){const q=this.g,A=q.A,px=q.cx+q.bwh,u=-q.bwh+q.twh,v=-q.ch;return{x:px+u*Math.cos(A)-v*Math.sin(A),y:q.cy+u*Math.sin(A)+v*Math.cos(A)}},
   makePuddle(){const q=this.g,{w,U,yb,yf,cw}=q,dep=yf-yb,N=[7,12,19][this.lv-1]||12,L=this.lipW(),O={x:L.x+cw*.32,y:q.cy-cw*.04};
     const xMax=q.fx1-dep*.12,yMin=yb+dep*.08,C=[],E={x:O.x+rnd(-.02,.14)*w,y:yf+dep*.12},ct=q.cat;
-    for(let k=0;k<=6;k++){const t=k/6;C.push({x:O.x+(E.x-O.x)*t+Math.sin(t*3.1)*dep*.1*rnd(.4,1),y:O.y+(E.y-O.y)*t,r:dep*(.3-.08*t)})}
-    C.push({x:O.x+dep*.15,y:O.y+dep*.25,r:dep*rnd(.36,.42)});
-    for(let k=0;k<5;k++)C.push({x:O.x+rnd(-.2,.3)*w,y:O.y+rnd(.05,.5)*dep,r:dep*rnd(.18,.3)});
+    for(let k=0;k<=6;k++){const t=k/6;C.push({x:O.x+(E.x-O.x)*t+Math.sin(t*3.1)*dep*.1*rnd(.4,1),y:O.y+(E.y-O.y)*t,r:dep*(.34-.08*t)})}
+    C.push({x:O.x+dep*.1,y:O.y+dep*.3,r:dep*rnd(.42,.48)});
+    for(let k=0;k<6;k++)C.push({x:O.x+rnd(-.28,.3)*w,y:O.y+rnd(.12,.55)*dep,r:dep*rnd(.2,.32)});
     for(let k=0;k<2;k++)C.push({x:O.x+rnd(.12,.3)*w,y:O.y+rnd(-.05,.2)*dep,r:dep*rnd(.16,.24)});
     let bx0=1e9,bx1=-1e9,by0=1e9,by1=-1e9;for(const c of C){bx0=Math.min(bx0,c.x-c.r);bx1=Math.max(bx1,c.x+c.r);by0=Math.min(by0,c.y-c.r);by1=Math.max(by1,c.y+c.r)}
     const inside=(x,y,sp)=>x<xMax&&x>q.fx0+dep*.12&&y>yMin&&y<yf+dep*.06&&!(x<O.x-sp*.1&&y<O.y+sp*.35)&&Math.hypot(x-ct.x,(y-ct.y)*1.4)>ct.s*1.5+sp*.4&&C.some(c=>Math.hypot(c.x-x,c.y-y)<c.r);
