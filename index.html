@@ -2272,12 +2272,16 @@ const sYay=()=>{sVoice(380,520,.3,[[400,6,1.2],[2100,8,.7]],.16);sVoice(520,430,
 const sNya=(k=1,d=0)=>sVoice(720*k,520*k,.42,[[1300,5,1.2],[2600,7,.6]],.12,d,10);
 const sNyaQ=(d=0)=>sVoice(560,830,.36,[[1200,5,1.2],[2500,7,.6]],.11,d,8);
 let cupNB=null;acReset.push(()=>{cupNB=null});
+/* こぼれる音：シャーッではなく、氷のコロンと、水のとぽぽっ（やわらかい音だけ） */
 function sPour(dur,vol=.12,f=900){if(!soundOn)return;const a=audio();if(!a)return;try{
-  if(!cupNB){const len=a.sampleRate*2,b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;cupNB=b}
-  const t=a.currentTime,s=a.createBufferSource();s.buffer=cupNB;s.loop=true;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=.8;
-  bp.frequency.setValueAtTime(f*1.4,t);bp.frequency.exponentialRampToValueAtTime(f*.7,t+dur);const g=a.createGain();
-  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.08);g.gain.setValueAtTime(vol,t+dur*.5);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-  s.connect(bp).connect(g).connect(a.destination);s.start(t);s.stop(t+dur+.05)}catch(e){}}
+  if(!cupNB){const len=a.sampleRate*2,b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<len;i++){l=l*.85+(Math.random()*2-1)*.15;d[i]=l}cupNB=b}
+  const t=a.currentTime,s=a.createBufferSource();s.buffer=cupNB;s.loop=true;const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=f*.45;lp.Q.value=.5;const g=a.createGain();
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol*.22,t+.15);g.gain.setValueAtTime(vol*.22,t+dur*.5);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(lp).connect(g).connect(a.destination);s.start(t);s.stop(t+dur+.05)}catch(e){}
+  const up=f>800,n=Math.round(dur*9);
+  for(let i=0;i<n;i++){const d=i/n*dur*.9+Math.random()*.06,b=rnd(260,560);bloop(b,b*rnd(1.5,2.1),rnd(.05,.09),vol*.32*(1-i/n*.5),d)}
+  const clk=(d,fr,v)=>{bloop(fr,fr*1.01,.16,v,d,'triangle');bloop(fr*2.7,fr*2.72,.07,v*.35,d)};
+  if(up){clk(.02,1700,vol*.38);clk(.16,1300,vol*.3);clk(.42,1550,vol*.22)}else{clk(dur*.55,1300,vol*.28);clk(dur*.7,1700,vol*.32)}}
 const sDrip=()=>{bloop(1500+Math.random()*300,600,.09,.07);bloop(520,300,.07,.035,.012)};
 const sDripUp=()=>bloop(600,1700,.08,.05);
 const clamp01=v=>v<0?0:v>1?1:v;
