@@ -2289,7 +2289,7 @@ const clamp01=v=>v<0?0:v>1?1:v;
 const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:null,
   scn:document.createElement('canvas'),sg:null,pud:document.createElement('canvas'),pg:null,pM:40,sd:1,
   jp:[],grab:new Map(),t:0,spots:[],drips:[],wood:null,pBox:null,idle:0,lastPlop:0,hinted:false,
-  cat:{jt:9,puff:0,blink:0,nb:2,tilt:0,tiltT:0,hold:0,look:0},kid:{st:'idle',t:0,blink:0,nb:3},bub:[],
+  cat:{jt:9,puff:0,blink:0,nb:2,tilt:0,tiltT:0,hold:0,look:0,mode:'home',px:0,py:0,f:1,bob:0,paw:-1,flee:-1},kid:{st:'idle',t:0,blink:0,nb:3},bub:[],
 
   /* --- 大きさと位置 --- */
   layout(){if(!W||view!=='cup')return;const top=HB+4,pb=parseFloat(getComputedStyle(panel).paddingBottom)||18,bot=H-pb+4;
@@ -2398,17 +2398,31 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
   /* --- できごと --- */
   setKid(st){this.kid.st=st;this.kid.t=0},
   say(who,text,dur=1.8,delay=0){this.bub=this.bub.filter(b=>b.who!==who);this.bub.push({who,text,t:-delay,dur})},
-  startle(){this.setKid('aah');this.say('kid','あーっ！',2.1);const c=this.cat;c.puff=1;if(c.jt>2){c.jt=0;this.say('cat','ニャッ!?',1.6,.18);sNya(1.15,.18)}},
+  startle(){this.setKid('aah');this.say('kid','あーっ！',2.1);const c=this.cat;c.puff=1;if(c.jt>2){c.jt=0;this.say('cat','ニャッ!?',1.6,.18);sNya(1.15,.18)}if(c.mode!=='home')c.flee=.55},
   spill(){this.makePuddle();this.stage='spill';this.T=0;this.panelOpen=false;this.hinted=true;updUI()},
-  wobble(){if(this.stage==='wobble')return;this.makePuddle();this.stage='wobble';this.wt=0;this.T=0;this.lastRock=0;this.panelOpen=false;this.bub=[];this.setKid('idle');this.hinted=true;updUI()},
-  rock(){const t=this.wt||0;return .1*Math.sin(t*15)*Math.min(1,t*4)*(t>1.1?Math.max(.4,1-(t-1.1)):1)},
+  wobble(){if(this.stage==='wobble')return;this.makePuddle();this.stage='wobble';this.wt=0;this.T=0;this.lastRock=0;this.catHome();this.panelOpen=false;this.bub=[];this.setKid('idle');this.hinted=true;updUI()},
+  /* ねこの居場所：ふだんはテーブルの右。グラグラすると、コップのうしろを通って左わきへ行き、ねこパンチ */
+  catPos(){const c=this.cat,Q=this.g.cat;return c.mode==='home'?{x:Q.x,y:Q.y}:{x:c.px,y:c.py}},
+  catSpot(){const q=this.g,dep=q.yf-q.yb;return{x:q.cx-q.bwh-q.cat.s*.85,y:q.cy-dep*.03}},
+  catMove(mode,to,dur){const c=this.cat,q=this.g,dep=q.yf-q.yb,fr=this.catPos();c.mode=mode;c.m0=fr;c.m1=to;c.mt=0;c.md=dur;
+    c.mc={x:q.cx+q.cw*.25,y:q.yb+dep*.02};c.f=to.x<fr.x?1:-1},
+  catStep(dt){const c=this.cat;
+    if(c.mode==='walk'||c.mode==='flee'){c.mt+=dt;const k=clamp01(c.mt/c.md),e=k*k*(3-2*k),u=1-e,A=c.m0,B=c.mc,D=c.m1;
+      c.px=u*u*A.x+2*u*e*B.x+e*e*D.x;c.py=u*u*A.y+2*u*e*B.y+e*e*D.y;c.bob=Math.abs(Math.sin(c.mt*(c.mode==='flee'?20:13)))*this.g.cat.s*.13*(1-k*k);
+      if(k>=1){c.bob=0;if(c.mode==='walk'){c.mode='sit';c.f=-1}else{c.mode='home';c.f=1}}}
+    if(c.paw>=0){c.paw+=dt/.55;if(c.paw>=1)c.paw=-1}
+    if(c.flee>=0){c.flee-=dt;if(c.flee<0&&c.mode!=='home'){c.flee=-1;this.catMove('flee',{x:this.g.cat.x,y:this.g.cat.y},.85)}}},
+  catHome(){const c=this.cat;c.mode='home';c.f=1;c.bob=0;c.paw=-1;c.flee=-1},
+  rock(){const t=this.wt||0;return .1*Math.sin(t*15)*Math.min(1,t*4)*(t>.9?Math.max(.22,1-(t-.9)*.9):1)},
   wobUpdate(dt){const t0=this.wt,t=this.wt+=dt,cr=x=>t0<x&&x<=t,c=this.cat;
     const s0=Math.sin(t0*15),s1=Math.sin(t*15);if(s0*s1<=0&&t-this.lastRock>.08){this.lastRock=t;bloop(1700+Math.random()*300,1650,.05,.035,0,'triangle');bloop(380,300,.05,.03)}
     if(cr(.35)){this.setKid('wow');this.say('kid','あっ……',1.2)}
-    if(cr(.6)){c.tiltT=.3;c.hold=1;c.puff=.45}
-    if(cr(1.1)){c.jt=0;c.puff=1;c.tiltT=0;this.say('cat','ニャッ!?',1.5);sNya(1.15)}
-    if(cr(1.65)){bloop(120,60,.22,.16,0,'triangle');bloop(260,140,.1,.08,.02);this.shk=.3;this.spill()}},
-  reset(){if(!this.g)this.layout();this.makePuddle();this.stage='stand';this.T=0;this.bub=[];this.setKid('idle');const c=this.cat;c.jt=9;c.puff=0;c.tiltT=0;this.panelOpen=true;this.idle=0;updUI()},
+    if(cr(.55)){c.tiltT=.3;c.hold=.7;this.say('cat','ニャ？',1.1);sNyaQ()}
+    if(cr(1.1))this.catMove('walk',this.catSpot(),1.25);
+    if(cr(1.1)||cr(1.45)||cr(1.8)||cr(2.1))bloop(240,200,.04,.03,0,'triangle');
+    if(cr(2.5)){c.f=-1;c.paw=0;this.say('cat','ちょいっ',1)}
+    if(cr(2.77)){bloop(1300,900,.05,.07,0,'triangle');bloop(140,70,.2,.15,.02,'triangle');this.shk=.25;this.spill()}},
+  reset(){if(!this.g)this.layout();this.makePuddle();this.stage='stand';this.T=0;this.bub=[];this.setKid('idle');const c=this.cat;c.jt=9;c.puff=0;c.tiltT=0;this.catHome();this.panelOpen=true;this.idle=0;updUI()},
   enter(){this.layout();this.reset()},
   leave(){this.grab.clear();if(view==='cup'){clearTimeout(toastT);document.getElementById('toast').hidden=true}},
   jFinish(){for(const p of this.jp){p.h=1;p.state='home'}this.stage='back';this.T=this.TEND;this.setKid('wow');this.say('kid','あれれ？',1.6);
@@ -2433,8 +2447,8 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
     if(k.st==='aah'&&k.t>2.3){this.setKid('sad');this.say('kid','こぼれちゃった…',1.9)}
     if((k.st==='sad'&&k.t>4)||(k.st==='hehe'&&k.t>1.4)||(k.st==='yay'&&k.t>3.2)||(k.st==='wow'&&this.stage!=='back'&&this.stage!=='wobble'&&k.t>1))this.setKid('idle');
     const c=this.cat;c.jt+=dt;c.puff=Math.max(0,c.puff-dt*.4);c.nb-=dt;if(c.nb<0){c.blink=.14;c.nb=rnd(2.5,6)}c.blink=Math.max(0,c.blink-dt);
-    c.hold-=dt;if(c.hold<0)c.tiltT=0;c.tilt+=(c.tiltT-c.tilt)*Math.min(1,dt*6);
-    const tgt=this.stage==='spill'&&this.spots.length?this.spots[0].x:this.O?this.O.x:this.g.cx;c.look+=(Math.max(-1,Math.min(1,(tgt-this.g.cat.x)/(this.g.U*.4)))-c.look)*Math.min(1,dt*4);
+    this.catStep(dt);c.hold-=dt;if(c.hold<0)c.tiltT=0;c.tilt+=(c.tiltT-c.tilt)*Math.min(1,dt*6);
+    const tgt=this.stage==='spill'&&this.spots.length?this.spots[0].x:this.O?this.O.x:this.g.cx;c.look+=(Math.max(-1,Math.min(1,c.f*(tgt-this.catPos().x)/(this.g.U*.4)))-c.look)*Math.min(1,dt*4);
     for(let i=this.bub.length-1;i>=0;i--){const b=this.bub[i];b.t+=dt;if(b.t>b.dur)this.bub.splice(i,1)}
     this.idle=(this.stage==='stand'||this.stage==='done')?this.idle+dt:0;
     this.jUpdate(dt)},
@@ -2478,7 +2492,7 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
   /* --- さわる --- */
   local(e){return{x:e.clientX-this.G.x,y:e.clientY-this.G.y}},
   hitCup(x,y){const q=this.g;return Math.hypot(x-q.cx,(y-(q.cy-q.ch*.5))*.8)<Math.max(q.ch*.75,40)},
-  hitCat(x,y){const q=this.g.cat,j=this.cat.jt<.55?-Math.sin(this.cat.jt/.55*Math.PI)*q.s*1.3:0;return Math.hypot(x-q.x,y-(q.y-q.s*1.05+j))<q.s*1.15},
+  hitCat(x,y){if(this.stage==='wobble')return false;const q=this.g.cat,P=this.catPos(),j=this.cat.jt<.55?-Math.sin(this.cat.jt/.55*Math.PI)*q.s*1.3:0;return Math.hypot(x-P.x,y-(P.y-q.s*1.05+j))<q.s*1.15},
   hitKid(x,y){const q=this.g.kid;return Math.hypot(x-q.x,y-(this.g.yb-q.s*1.4))<q.s*1.35},
   down(e){const x=e.clientX,y=e.clientY,st=this.stage,L=this.local(e);
     if(this.panelOpen&&st!=='stand'){this.panelOpen=false;updUI()}
@@ -2508,7 +2522,7 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
     if(!this.sg)return;const G=this.G,{w,h}=this.g;
     ctx.save();ctx.globalAlpha=.3;ctx.fillStyle=C.shadow;rrect(ctx,G.x+8,G.y+14,w,h,18);ctx.fill();ctx.restore();
     ctx.save();rrect(ctx,G.x,G.y,w,h,18);ctx.clip();{const k=(this.shk||0)*12;if(k>0)ctx.translate(rnd(-k,k),rnd(-k*.5,k*.5))}ctx.drawImage(this.scn,G.x,G.y,w,h);ctx.translate(G.x,G.y);
-    this.drawKid();this.drawDrips();this.drawPuddle();this.drawLips();this.drawStream();this.drawCup();this.drawCat();this.drawHands();this.drawHint();this.drawBubbles();
+    this.drawKid();this.drawDrips();this.drawPuddle();this.drawLips();const cb=this.catPos().y<this.g.cy;if(cb)this.drawCat();this.drawStream();this.drawCup();if(!cb)this.drawCat();this.drawHands();this.drawHint();this.drawBubbles();
     ctx.restore();ctx.strokeStyle='rgba(80,60,40,.22)';ctx.lineWidth=1;rrect(ctx,G.x+.5,G.y+.5,w-1,h-1,18);ctx.stroke();
     for(const p of this.jp)if(p.state!=='home'||p.h<.95)this.lDraw(p)},
   drawPuddle(){const q=this.g,M=this.pM,w=q.w,h=q.h,st=this.stage;if(!this.jp.length)return;
@@ -2590,8 +2604,8 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
     ctx.restore()},
   drawHands(){const q=this.g,K=q.kid,s=K.s,st=this.kid.st;if(st==='aah'||st==='yay')return;ctx.fillStyle='#ffd9bd';ctx.strokeStyle='rgba(150,100,70,.35)';ctx.lineWidth=1;
     for(const e of[-1,1]){ctx.beginPath();ctx.ellipse(K.x+e*s*.6,q.yb+s*.12,s*.26,s*.18,0,0,TAU);ctx.fill();ctx.stroke()}},
-  drawCat(){const Q=this.g.cat,s=Q.s,c=this.cat,pf=c.puff;let x=Q.x,y=Q.y;const jy=c.jt<.55?-Math.sin(c.jt/.55*Math.PI)*s*1.3:0;
-    ctx.fillStyle='rgba(70,40,15,.2)';ctx.beginPath();ctx.ellipse(x,y+s*.04,s*.85*(1+jy/(s*5)),s*.2,0,0,TAU);ctx.fill();y+=jy;
+  drawCat(){const Q=this.g.cat,s=Q.s,c=this.cat,pf=c.puff,P=this.catPos();let x=P.x,y=P.y-c.bob;const jy=c.jt<.55?-Math.sin(c.jt/.55*Math.PI)*s*1.3:0;
+    ctx.fillStyle='rgba(70,40,15,.2)';ctx.beginPath();ctx.ellipse(x,P.y+s*.04,s*.85*(1+jy/(s*5)),s*.2,0,0,TAU);ctx.fill();y+=jy;ctx.save();ctx.translate(x,0);ctx.scale(c.f,1);ctx.translate(-x,0);
     const body='#f0a65c',dark='#d6843b',cream='#fff3e2';
     ctx.strokeStyle=body;ctx.lineCap='round';ctx.lineWidth=s*(.2+.2*pf);const ta=Math.sin(this.t*2.2)*.5*(1-pf);
     ctx.beginPath();ctx.moveTo(x+s*.45,y-s*.12);ctx.quadraticCurveTo(x+s*1.2,y-s*.1,x+s*1.05+Math.sin(ta)*s*.3,y-s*(.75+pf*.6));ctx.stroke();
@@ -2600,6 +2614,8 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
     ctx.fillStyle=dark;for(const k of[-1,0,1]){ctx.beginPath();ctx.ellipse(x+s*.42,y-s*(.55+k*.22),s*.12,s*.05,.3,0,TAU);ctx.fill()}
     ctx.fillStyle=cream;ctx.beginPath();ctx.ellipse(x-s*.08,y-s*.45,s*.28,s*.38,0,0,TAU);ctx.fill();
     for(const dx of[-.26,.1]){ctx.beginPath();ctx.ellipse(x+dx*s,y-s*.03,s*.15,s*.09,0,0,TAU);ctx.fill()}
+    if(c.paw>=0){const k=Math.sin(c.paw*Math.PI),tx=x-s*(.35+.62*k),ty=y-s*(.38+.22*k);ctx.strokeStyle=body;ctx.lineCap='round';ctx.lineWidth=s*.22;
+      ctx.beginPath();ctx.moveTo(x-s*.3,y-s*.3);ctx.lineTo(tx,ty);ctx.stroke();ctx.fillStyle=cream;ctx.beginPath();ctx.arc(tx,ty,s*.14,0,TAU);ctx.fill()}
     ctx.save();ctx.translate(x-s*.05,y-s*1.25-pf*s*.06);ctx.rotate(c.tilt);
     const ea=pf>.3?.5:0;for(const e of[-1,1]){ctx.save();ctx.translate(e*s*.3,-s*.25);ctx.rotate(e*(.25+ea));ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(-s*.18,s*.05);ctx.lineTo(0,-s*.42);ctx.lineTo(s*.18,s*.05);ctx.closePath();ctx.fill();
       ctx.fillStyle='#f6b9a8';ctx.beginPath();ctx.moveTo(-s*.09,s*.02);ctx.lineTo(0,-s*.27);ctx.lineTo(s*.09,s*.02);ctx.closePath();ctx.fill();ctx.restore()}
@@ -2613,12 +2629,12 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
     ctx.strokeStyle='#8a5a3a';ctx.lineWidth=Math.max(.8,s*.03);ctx.beginPath();
     if(pf>.3){ctx.ellipse(0,s*.24,s*.05,s*.06,0,0,TAU)}else{ctx.moveTo(-s*.09,s*.2);ctx.quadraticCurveTo(-s*.045,s*.25,0,s*.15);ctx.quadraticCurveTo(s*.045,s*.25,s*.09,s*.2)}ctx.stroke();
     ctx.strokeStyle='rgba(90,60,40,.5)';ctx.lineWidth=1;ctx.beginPath();for(const e of[-1,1])for(const k of[-.04,.04]){ctx.moveTo(e*s*.22,s*.15+k*s);ctx.lineTo(e*s*.55,s*.12+k*s*2.2)}ctx.stroke();
-    ctx.restore()},
+    ctx.restore();ctx.restore()},
   drawBubbles(){const q=this.g,U=q.U,fs=Math.max(13,Math.min(22,U*.05));ctx.font=`700 ${fs}px ${FONT_R}`;ctx.textAlign='center';ctx.textBaseline='middle';
     for(const b of this.bub){if(b.t<0)continue;const k=Math.min(1,b.t/.18),fade=Math.min(1,(b.dur-b.t)/.25);if(fade<=0)continue;
       let ax,ay,bx,by;const tw=ctx.measureText(b.text).width,bw=tw+fs*1.1,bh=fs*1.75;
       if(b.who==='kid'){const s=q.kid.s;ax=q.kid.x+s*.7;ay=(this.kidY||q.yb-s*1.55)-s*.8;bx=ax+s*.2;by=ay-s*.5-bh}
-      else{const s=q.cat.s,j=this.cat.jt<.55?-Math.sin(this.cat.jt/.55*Math.PI)*s*1.3:0;ax=q.cat.x-s*.3;ay=q.cat.y-s*1.75+j;bx=ax-bw+s*.2;by=ay-s*.4-bh}
+      else{const s=q.cat.s,P=this.catPos(),j=this.cat.jt<.55?-Math.sin(this.cat.jt/.55*Math.PI)*s*1.3:0;ax=P.x-s*.3;ay=P.y-s*1.75+j-this.cat.bob;bx=P.x<q.cx?P.x+s*.2:ax-bw+s*.2;by=ay-s*.4-bh}
       bx=Math.max(6,Math.min(q.w-6-bw,bx));by=Math.max(6,by);
       const e=k<1?1+.25*Math.sin(k*Math.PI):1,cxb=bx+bw/2,cyb=by+bh/2;
       ctx.save();ctx.globalAlpha=fade;ctx.translate(cxb,cyb);ctx.scale(e*(.6+.4*k),e*(.6+.4*k));ctx.translate(-cxb,-cyb);
