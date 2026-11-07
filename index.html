@@ -1650,12 +1650,13 @@ function onMotion(e){let x,y;const a=e.acceleration;
 addEventListener('devicemotion',onMotion);
 function flushMotion(){const m=Math.hypot(mAx,mAy);if(m>0){const k=m>900?900/m:1;shake(mAx*k,mAy*k);mAx=mAy=0}}
 let toastT=null;function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},5200)}
+const motionAlt=()=>view==='cup'?'コップに指でさわっても、グラグラします':'池を指でさっとなでても、水がゆれます';
 async function enableMotion(){audio();
   try{if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){const r=await DeviceMotionEvent.requestPermission();checkAudioSoon();if(r!=='granted')throw 0}}
-  catch(e){toast('スマホの動きを使えませんでした。池を指でさっとなでても、水がゆれます');return}
+  catch(e){toast('スマホの動きを使えませんでした。'+motionAlt());return}
   removeEventListener('devicemotion',onMotion);addEventListener('devicemotion',onMotion);
   toast('スマホをゆらしてみてください');
-  setTimeout(()=>{if(!gotMotion)toast('このページではスマホの動きを読めないようです。池を指でさっとなでても、水がゆれます')},2000)}
+  setTimeout(()=>{if(!gotMotion)toast('このページではスマホの動きを読めないようです。'+motionAlt())},2000)}
 const motionBtn=document.getElementById('motion');
 if(!(typeof DeviceMotionEvent!=='undefined'&&matchMedia('(pointer: coarse)').matches))motionBtn.hidden=true;
 motionBtn.addEventListener('click',enableMotion);
