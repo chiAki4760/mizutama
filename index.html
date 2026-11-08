@@ -1465,16 +1465,25 @@ function scatter(){const list=pieces.filter(p=>p.state==='home'&&!p.torn).sort((
   checkStage();}
 
 // ---------- layout ----------
-function layout(){
+/* 画面の向きが変わったら、ちらばった水玉を新しい画面に同じ割合でひろげなおす（端に一列に押しこめない） */
+function remapLoose(list,ow,oh,ohb){if(!ow||!oh||(ow===W&&oh===H&&ohb===HB))return;
+  const fx=x=>x/ow*W,fy=y=>HB+(y-ohb)/Math.max(1,oh-ohb)*(H-HB);
+  for(const p of list){if(p.state!=='free'&&p.state!=='fly')continue;p.x=fx(p.x);p.y=fy(p.y);if(p.state==='fly'){p.tx=fx(p.tx);p.ty=fy(p.ty)}p.vx*=.3;p.vy*=.3;jiggle(p,.8)}}
+let wasLand=null,lastTip=-9;
+/* スマホを横にしたとき（コップの水：コップがたおれる） */
+function onSideways(){const now=performance.now()/1000;if(now-lastTip<2)return;lastTip=now;if(view==='cup')CUP.tipOver()}
+function layout(){const ow=W,oh=H,ohb=HB;
   DPR=Math.min(window.devicePixelRatio||1,2);[W,H]=viewSize();
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
   HB=document.getElementById('top').getBoundingClientRect().bottom+6;
   if(W>H*1.15){R=Math.min((H-HB)*0.44,W*0.26,220);BX=Math.max(R+24,W*0.3);BY=HB+(H-HB)/2}
   else{R=Math.min(W*0.42,(H-HB)*0.3,210);BX=W/2;BY=HB+R+10}
   renderPic(time);
+  for(const L of[pieces,WIN.jp,CUP.jp,SLIME.jp])remapLoose(L,ow,oh,ohb);
   for(const p of pieces)if(p.state==='home'){const q=slotPos(p);p.x=q.x;p.y=q.y}
   if(view==='map')mapFit(false);
   WIN.layout();CUP.layout();SLIME.layout();
+  {const land=coarse&&W>H*1.05;if(wasLand===false&&land)setTimeout(onSideways,250);if(ow)wasLand=land}
 }
 /* 画面の向きを変えたあと、iPhoneでボタンの見た目と押せる場所がずれないよう、何度か整えなおす */
 let fixT=[];
@@ -1647,14 +1656,19 @@ function frame(now){watchSize();const dt=Math.min(0.033,Math.max(0.001,(now-last
 
 // ---------- shaking ----------
 let lastShakeSnd=0,mAx=0,mAy=0,gotMotion=false,lgv=null;
+/* ゆらしたとき、水玉ごとに強さと向きを少しずつ変える（かたまりのまま動かず、ばらける） */
+function looseKick(p,ax,ay,m,k){const s=k*rnd(.45,1.35),a=rnd(0,TAU),r=Math.min(260,m*.32)*Math.random();p.vx+=ax*s+Math.cos(a)*r;p.vy+=ay*s+Math.sin(a)*r}
+let sideT0=0,sideArm=false;
 function shake(ax,ay){const m=Math.hypot(ax,ay);if(m<60)return;if(view==='slime'){SLIME.shake(ax,ay,m);return}if(view==='cup'){CUP.shake(ax,ay,m);return}if(view==='window'){WIN.shake(ax,ay,m);return}const a=Math.atan2(ay,ax);
   if(view==='map'){{const c=GL()?(pickW(glb.cx,glb.cy)||{x:0,y:WH/2}):{x:(W/2-cam.ox)/cam.s,y:(H/2-cam.oy)/cam.s};PL.world.slosh(ax*0.35,ay*0.35,c.x,c.y)}if(time-lastShakeSnd>0.2&&m>200){lastShakeSnd=time;bloop(260+Math.random()*160,620+Math.random()*200,0.22,0.08)}return}
   kick(board,a,-Math.min(3,m/260));jiggle(board,Math.min(0.8,m/900));
-  for(const p of pieces){if(p.state==='free'){p.vx+=ax*0.6;p.vy+=ay*0.6;jiggle(p,Math.min(1.4,m/450))}else if(p.state==='home')jiggle(p,Math.min(0.7,m/700))}
+  for(const p of pieces){if(p.state==='free'){looseKick(p,ax,ay,m,.6);jiggle(p,Math.min(1.4,m/450))}else if(p.state==='home')jiggle(p,Math.min(0.7,m/700))}
   if(stage==='done'&&SC.slosh)SC.slosh(ax*0.35,ay*0.35);
   if(time-lastShakeSnd>0.2&&m>200){lastShakeSnd=time;bloop(260+Math.random()*160,620+Math.random()*200,0.22,0.08);bloop(700,1300,0.08,0.04,0.06)}}
 function onMotion(e){let x,y;const a=e.acceleration;
   if(a&&a.x!=null){x=a.x;y=a.y}else{const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;if(!lgv)lgv={x:g.x,y:g.y};lgv.x+=(g.x-lgv.x)*0.1;lgv.y+=(g.y-lgv.y)*0.1;x=g.x-lgv.x;y=g.y-lgv.y}
+  {const g=e.accelerationIncludingGravity;if(g&&g.x!=null&&g.y!=null){const gx=Math.abs(g.x),gy=Math.abs(g.y);
+    if(gy>7&&gx<4){sideArm=true;sideT0=0}else if(sideArm&&gx>7&&gy<4.5){const now=performance.now();if(!sideT0)sideT0=now;else if(now-sideT0>350){sideArm=false;sideT0=0;onSideways()}}else sideT0=0}}
   if(!gotMotion){gotMotion=true;const b=document.getElementById('motion');if(b)b.hidden=true}
   const an=((screen.orientation&&screen.orientation.angle)||window.orientation||0)*Math.PI/180;
   const sx=x*Math.cos(an)+y*Math.sin(an),sy=-(-x*Math.sin(an)+y*Math.cos(an));
@@ -2412,6 +2426,9 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
   setKid(st){this.kid.st=st;this.kid.t=0},
   say(who,text,dur=1.8,delay=0){this.bub=this.bub.filter(b=>b.who!==who);this.bub.push({who,text,t:-delay,dur})},
   startle(){this.setKid('aah');this.say('kid','あーっ！',2.1);const c=this.cat;c.puff=1;if(c.jt>2){c.jt=0;this.say('cat','ニャッ!?',1.6,.18);sNya(1.15,.18)}if(c.mode!=='home')c.flee=.55},
+  /* スマホを横にしたら、コップがたおれる */
+  tipOver(){const st=this.stage;if(st!=='stand'&&st!=='done'&&st!=='wobble')return;this.catHome();this.bub=[];this.fast=false;
+    this.setKid('wow');this.say('kid','わっ、かたむいた！',1.3);bloop(1300,900,.05,.07,0,'triangle');bloop(140,70,.2,.15,.02,'triangle');this.shk=.3;this.spill()},
   spill(){this.makePuddle();this.stage='spill';this.T=0;this.panelOpen=false;this.hinted=true;updUI()},
   wobble(fast=false){if(this.stage==='wobble'){if(fast&&!this.fast&&this.wt<1){this.fast=true;this.wt=Math.min(this.wt,.15)}return}this.fast=fast;this.makePuddle();this.stage='wobble';this.wt=0;this.T=0;this.lastRock=0;this.catHome();this.panelOpen=false;this.bub=[];this.setKid('idle');this.hinted=true;updUI()},
   /* ねこの居場所：ふだんはテーブルの右。グラグラすると、コップのうしろを通って左わきへ行き、ねこパンチ */
@@ -2539,7 +2556,7 @@ const CUP={stage:'stand',T:0,TEND:4.6,lv:2,panelOpen:true,G:{x:0,y:0,w:0,h:0},g:
       if(this.nerv>.6&&this.t-this.lastNerv>3.5){this.lastNerv=this.t;const k=this.kid;if(k.st==='idle'||k.st==='sad'){this.setKid('wow');this.say('kid',['おっとっと…','そーっと…','あぶない…'][(Math.random()*3)|0],1.4)}
         const c=this.cat;if(c.puff<.3){c.tiltT=.3;c.hold=1}}
       return}
-    for(const p of this.jp){if(p.state==='free'){p.vx+=ax*.6;p.vy+=ay*.6;jiggle(p,Math.min(1.4,m/450))}else if(p.state==='home'&&this.gro(p)>.5)jiggle(p,Math.min(.7,m/700))}
+    for(const p of this.jp){if(p.state==='free'){looseKick(p,ax,ay,m,.6);jiggle(p,Math.min(1.4,m/450))}else if(p.state==='home'&&this.gro(p)>.5)jiggle(p,Math.min(.7,m/700))}
     if(m>200&&this.t-this.lastPlop>.2){this.lastPlop=this.t;bloop(260+Math.random()*160,620+Math.random()*200,.22,.08)}},
 
   /* --- 描く --- */
@@ -2851,7 +2868,7 @@ const SLIME={stage:'whole',lv:2,shape:'hito',hard:.6,panelOpen:true,G:{x:0,y:0,w
     if(sp>=450){const k=.35;for(let s=1;s<=6;s++){const tx=p.x+p.vx*.05*s,ty=p.y+p.vy*.05*s;if(this.inGlass(tx,ty,m)){this.throwTo(p,tx,ty,.2);return}}}
     p.state='free';p.vx*=.5;p.vy*=.5},
   throwTo(p,x,y,d){p.state='throw';p.sx=p.x;p.sy=p.y;p.ex=x;p.ey=y;p.tt=0;p.td=d;p.spin=rnd(-6,6)},
-  shake(ax,ay,m){for(const p of this.jp){if(p.state==='free'){p.vx+=ax*.5;p.vy+=ay*.5-Math.min(400,m*.3);jiggle(p,Math.min(1.2,m/450))}
+  shake(ax,ay,m){for(const p of this.jp){if(p.state==='free'){looseKick(p,ax,ay,m,.5);p.vy-=Math.min(400,m*.3);jiggle(p,Math.min(1.2,m/450))}
       else if(p.state==='stuck'&&m>650&&Math.random()<.35){p.state='free';p.cr=null;p.vx=ax*.4;p.vy=ay*.4;this.strand(p.x,p.y,p);sGoo()}
       else if(p.state==='home')jiggle(p,Math.min(.6,m/800))}
     if(this.stage==='done'||this.stage==='whole'){kick(this.wob,Math.atan2(ay,ax),-Math.min(2,m/400));if(m>300&&this.t-this.lastSnd>.25){this.lastSnd=this.t;sJelly()}}},
