@@ -31,6 +31,7 @@ body{background:radial-gradient(120% 90% at 30% 15%,var(--bg1),var(--bg2));backg
 .sub{font-size:.82rem;color:var(--ink-soft);margin-top:2px;font-variant-numeric:tabular-nums}
 .sub b{color:var(--accent);font-size:1rem}
 .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:520px){.btns{gap:6px}.btns button{padding:7px 11px}}
 button{pointer-events:auto;font:500 .85rem var(--f-body);color:var(--ink);background:linear-gradient(180deg,var(--glass1),var(--glass2));border:1px solid var(--line);
   border-radius:999px;padding:7px 14px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   box-shadow:0 1px 0 var(--hi) inset,0 4px 12px -8px var(--shadow);transition:transform .15s,box-shadow .2s,background .2s,color .2s}
@@ -1475,7 +1476,14 @@ function layout(){
   if(view==='map')mapFit(false);
   WIN.layout();CUP.layout();SLIME.layout();
 }
-addEventListener('resize',()=>{layout()});
+/* 画面の向きを変えたあと、iPhoneでボタンの見た目と押せる場所がずれないよう、何度か整えなおす */
+let fixT=[];
+function refit(){try{if(scrollX||scrollY)scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0}catch(e){}
+  const tp=document.getElementById('top');tp.style.transform='translateZ(0)';void tp.offsetHeight;tp.style.transform='';layout()}
+function onResize(){refit();fixT.forEach(clearTimeout);fixT=[120,400,900].map(ms=>setTimeout(refit,ms))}
+addEventListener('resize',onResize);addEventListener('orientationchange',onResize);
+if(window.visualViewport)visualViewport.addEventListener('resize',onResize);
+if(window.ResizeObserver){let lastHB=0;new ResizeObserver(()=>{const hb=document.getElementById('top').getBoundingClientRect().bottom;if(Math.abs(hb-lastHB)>1){lastHB=hb;layout()}}).observe(document.getElementById('top'))}
 
 
 // ---------- magnets (砂鉄と磁石の絵のとき) ----------
