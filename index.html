@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>みずたまジグソー</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1466,7 +1466,7 @@ function scatter(){const list=pieces.filter(p=>p.state==='home'&&!p.torn).sort((
 
 // ---------- layout ----------
 function layout(){
-  DPR=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  DPR=Math.min(window.devicePixelRatio||1,2);[W,H]=viewSize();
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
   HB=document.getElementById('top').getBoundingClientRect().bottom+6;
   if(W>H*1.15){R=Math.min((H-HB)*0.44,W*0.26,220);BX=Math.max(R+24,W*0.3);BY=HB+(H-HB)/2}
@@ -1479,7 +1479,11 @@ function layout(){
 /* 画面の向きを変えたあと、iPhoneでボタンの見た目と押せる場所がずれないよう、何度か整えなおす */
 let fixT=[];
 function refit(){try{if(scrollX||scrollY)scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0}catch(e){}
-  const tp=document.getElementById('top');tp.style.transform='translateZ(0)';void tp.offsetHeight;tp.style.transform='';layout()}
+  for(const id of['top','panel','dock','toast']){const el=document.getElementById(id);if(!el)continue;const d=el.style.display;el.style.display='none';void el.offsetHeight;el.style.display=d}
+  layout()}
+/* 向きを変えたあと画面の大きさの知らせがおくれても、毎フレーム見張って自分でなおす */
+let vwChk=0;function viewSize(){const de=document.documentElement;return[de.clientWidth||innerWidth,de.clientHeight||innerHeight]}
+function watchSize(){if(++vwChk%10)return;const [w,h]=viewSize();if(Math.abs(w-W)>1||Math.abs(h-H)>1)onResize()}
 function onResize(){refit();fixT.forEach(clearTimeout);fixT=[120,400,900].map(ms=>setTimeout(refit,ms))}
 addEventListener('resize',onResize);addEventListener('orientationchange',onResize);
 if(window.visualViewport)visualViewport.addEventListener('resize',onResize);
@@ -1639,7 +1643,7 @@ function draw(){
   drawHint();
 }
 let last=performance.now();
-function frame(now){const dt=Math.min(0.033,Math.max(0.001,(now-last)/1000));last=now;if(view==='slime'){SLIME.update(dt);SLIME.draw()}else if(view==='cup'){CUP.update(dt);CUP.draw()}else if(view==='window'){WIN.update(dt);WIN.draw()}else{update(dt);draw()}requestAnimationFrame(frame)}
+function frame(now){watchSize();const dt=Math.min(0.033,Math.max(0.001,(now-last)/1000));last=now;if(view==='slime'){SLIME.update(dt);SLIME.draw()}else if(view==='cup'){CUP.update(dt);CUP.draw()}else if(view==='window'){WIN.update(dt);WIN.draw()}else{update(dt);draw()}requestAnimationFrame(frame)}
 
 // ---------- shaking ----------
 let lastShakeSnd=0,mAx=0,mAy=0,gotMotion=false,lgv=null;
